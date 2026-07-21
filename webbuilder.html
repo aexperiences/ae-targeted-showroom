@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Website Builder — Targeted Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="showroom.css">
+<style>
+  /* ---- Website Builder local styles (scoped; showroom.css untouched) ---- */
+  .wb-wrap{display:grid;grid-template-columns:400px 1fr;gap:16px;align-items:start}
+  @media(max-width:1080px){.wb-wrap{grid-template-columns:1fr}}
+  .wb-editor{position:sticky;top:78px;max-height:calc(100vh - 96px);overflow-y:auto;padding-right:4px}
+  .wb-editor::-webkit-scrollbar{width:8px}
+  .wb-editor::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+  .wb-sec{border:1px solid var(--line-soft);border-radius:12px;background:var(--panel);margin-bottom:12px;overflow:hidden}
+  .wb-sec > .wb-sh{display:flex;align-items:center;gap:9px;padding:12px 14px;cursor:pointer;user-select:none;font-size:12.5px;font-weight:700;letter-spacing:.3px}
+  .wb-sh .wb-ic{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:12px;background:var(--panel-3);flex:0 0 22px}
+  .wb-sh .wb-chev{margin-left:auto;color:var(--muted);font-size:11px;transition:.2s}
+  .wb-sec.closed .wb-chev{transform:rotate(-90deg)}
+  .wb-body{padding:2px 14px 14px}
+  .wb-sec.closed .wb-body{display:none}
+  .wb-tpl{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .wb-tplc{border:1px solid var(--line);border-radius:10px;padding:9px;cursor:pointer;background:var(--ink-2);transition:.14s;text-align:center}
+  .wb-tplc:hover{border-color:var(--brand)}
+  .wb-tplc.on{border-color:var(--brand);background:linear-gradient(180deg,rgba(255,106,44,.10),var(--ink-2));box-shadow:0 0 0 3px var(--brand-glow)}
+  .wb-tplc .swatch{height:30px;border-radius:6px;margin-bottom:7px}
+  .wb-tplc .tn{font-size:11px;font-weight:700}
+  .wb-tplc .td{font-size:9px;color:var(--muted);margin-top:2px;line-height:1.3}
+  .wb-color-row{display:flex;gap:12px}
+  .wb-color-row > div{flex:1}
+  .wb-cw{display:flex;align-items:center;gap:9px;background:var(--ink-2);border:1px solid var(--line);border-radius:10px;padding:6px 8px}
+  .wb-cw input[type=color]{width:34px;height:30px;border:none;border-radius:7px;background:none;padding:0;cursor:pointer}
+  .wb-cw input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+  .wb-cw input[type=color]::-webkit-color-swatch{border:1px solid var(--line);border-radius:6px}
+  .wb-cw .hexv{font-family:var(--mono);font-size:11.5px;color:var(--text-2)}
+  .wb-tog{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--line-soft)}
+  .wb-tog:last-child{border-bottom:none}
+  .wb-tog .tl{font-size:12.5px;font-weight:600}
+  .wb-tog .tsub{font-size:10.5px;color:var(--muted);margin-top:1px}
+  .sw{position:relative;width:40px;height:22px;flex:0 0 40px;border-radius:20px;background:var(--panel-3);border:1px solid var(--line);cursor:pointer;transition:.16s}
+  .sw::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--muted);transition:.16s}
+  .sw.on{background:linear-gradient(90deg,var(--brand),var(--brand-2));border-color:transparent}
+  .sw.on::after{left:20px;background:#180d06}
+  .wb-preview-wrap{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0b0d12;box-shadow:var(--shadow)}
+  .wb-pv-bar{display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--ink-2);border-bottom:1px solid var(--line-soft)}
+  .wb-pv-dots{display:flex;gap:6px}
+  .wb-pv-dots i{width:10px;height:10px;border-radius:50%;display:block}
+  .wb-pv-url{flex:1;background:var(--ink);border:1px solid var(--line-soft);border-radius:20px;padding:4px 12px;font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wb-vp{display:flex;gap:4px}
+  .wb-vp button{background:var(--panel-2);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:4px 9px;font-size:11px;cursor:pointer;transition:.14s}
+  .wb-vp button.on{border-color:var(--brand);color:var(--brand-ink);background:var(--panel-3)}
+  .wb-frame-host{padding:16px;display:flex;justify-content:center;background:repeating-linear-gradient(45deg,#0b0d12,#0b0d12 12px,#0c0f15 12px,#0c0f15 24px)}
+  .wb-frame-host iframe{width:100%;height:660px;border:none;border-radius:10px;background:#fff;box-shadow:0 20px 60px -24px rgba(0,0,0,.8);transition:width .3s ease}
+  .wb-frame-host.m iframe{width:390px}
+  .wb-frame-host.t iframe{width:768px}
+  .wb-mini{font-size:10.5px;color:var(--muted);margin-top:5px;line-height:1.4}
+  .wb-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .wb-health{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--text-2);margin-top:10px;padding:9px 11px;border:1px solid var(--line-soft);border-radius:10px;background:var(--ink-2)}
+  .wb-health .hd{width:9px;height:9px;border-radius:50%;flex:0 0 9px}
+  .wb-cta-row{display:flex;gap:10px}.wb-cta-row>*{flex:1}
+</style>
+</head>
+<body>
+<script src="showroom.js"></script>
+<script>
+(function () {
+  var S = Showroom;
+  var c = S.mount({ active: "webbuilder.html", crumb: "Website Builder" });
+
+  /* ---------------------------------------------------------- templates */
+  var TEMPLATES = {
+    bold: {
+      name: "Bold Startup",
+      desc: "Big type, dark hero",
+      headFont: "'Inter',system-ui,sans-serif",
+      bodyFont: "'Inter',system-ui,sans-serif",
+      brand: "#FF5A1F", accent: "#111827",
+      radius: 18, wide: 1120, mode: "dark",
+      heroPad: 120, weightHead: 800, letter: "-1.5px", pill: "New",
+      defaults: {
+        biz: "Northline", headline: "Ship your brand in a week, not a quarter.",
+        sub: "A conversion-first landing page, launched fast and built to sell. Your agency handles the rest.",
+        cta1: "Start free", cta2: "Book a demo"
+      }
+    },
+    elegant: {
+      name: "Elegant Local",
+      desc: "Warm, serif, calm",
+      headFont: "Georgia,'Times New Roman',serif",
+      bodyFont: "'Inter',system-ui,sans-serif",
+      brand: "#8A6D3B", accent: "#3E2C1C",
+      radius: 6, wide: 1040, mode: "light",
+      heroPad: 100, weightHead: 700, letter: "-.4px", pill: "Est. locally",
+      defaults: {
+        biz: "Cedar & Sage", headline: "A trusted name for the neighborhood.",
+        sub: "Personal service, done right the first time. Come see why the block keeps coming back.",
+        cta1: "Book a visit", cta2: "Our story"
+      }
+    },
+    bright: {
+      name: "Bright DTC",
+      desc: "Playful, rounded",
+      headFont: "'Inter',system-ui,sans-serif",
+      bodyFont: "'Inter',system-ui,sans-serif",
+      brand: "#F0489B", accent: "#7C3AED",
+      radius: 28, wide: 1080, mode: "light",
+      heroPad: 96, weightHead: 800, letter: "-1px", pill: "Fresh drop",
+      defaults: {
+        biz: "Sunroot", headline: "The good stuff, straight to your door.",
+        sub: "Small-batch, made with care, and always in season. Join thousands who made the switch.",
+        cta1: "Shop the box", cta2: "How it works"
+      }
+    }
+  };
+
+  var FONTS = {
+    "Inter / Inter": { head: "'Inter',system-ui,sans-serif", body: "'Inter',system-ui,sans-serif" },
+    "Georgia / Inter": { head: "Georgia,'Times New Roman',serif", body: "'Inter',system-ui,sans-serif" },
+    "Inter / Georgia": { head: "'Inter',system-ui,sans-serif", body: "Georgia,serif" },
+    "JetBrains / Inter": { head: "'JetBrains Mono',ui-monospace,monospace", body: "'Inter',system-ui,sans-serif" }
+  };
+
+  /* -------------------------------------------------- default site model */
+  function defaultsFor(tplKey) {
+    var t = TEMPLATES[tplKey];
+    var dd = t.defaults;
+    return {
+      template: tplKey,
+      brand: t.brand, accent: t.accent,
+      font: "Inter / Inter",
+      biz: dd.biz, headline: dd.headline, sub: dd.sub, cta1: dd.cta1, cta2: dd.cta2,
+      sec: { features: true, testimonial: true, pricing: true, contact: true },
+      f1t: "Launch fast", f1b: "Live in days, not weeks — a page built to convert from day one.",
+      f2t: "Made to sell", f2b: "Every section earns its place. Clear message, one obvious next step.",
+      f3t: "Fully yours", f3b: "Your colors, your voice, your brand — handed off clean and ready.",
+      quote: "They took our napkin idea and shipped a page that actually books customers. Worth every penny.",
+      author: "Dana Reyes", authorRole: "Owner, Northline Coffee Co."
+    };
+  }
+
+  function getSite() {
+    var d = S.db();
+    if (!d.site) { S.save(function (x){ x.site = defaultsFor("bold"); }); d = S.db(); }
+    return d.site;
+  }
+  function patch(fn) { S.save(function (d){ if (!d.site) d.site = defaultsFor("bold"); fn(d.site); }); }
+
+  /* --------------------------------------------------------------- shell */
+  c.innerHTML =
+    '<div class="page-h"><div class="ph-ic">▥</div><div>' +
+      '<h1>Website Builder</h1>' +
+      '<div class="sub">Build a client landing page live. Pick a template, edit everything, preview on the fly, hand it off.</div>' +
+    '</div><div class="spacer"></div>' +
+      '<span class="pill brand">live preview</span>' +
+    '</div>' +
+
+    '<div class="wb-wrap">' +
+      '<div class="wb-editor" id="editor"></div>' +
+      '<div>' +
+        '<div class="wb-preview-wrap">' +
+          '<div class="wb-pv-bar">' +
+            '<div class="wb-pv-dots"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>' +
+            '<div class="wb-pv-url" id="pvUrl">https://client-site.targeted.build</div>' +
+            '<div class="wb-vp">' +
+              '<button data-vp="d" class="on" title="Desktop">▭</button>' +
+              '<button data-vp="t" title="Tablet">▯</button>' +
+              '<button data-vp="m" title="Mobile">▮</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="wb-frame-host" id="frameHost"><iframe id="pv" title="Live preview"></iframe></div>' +
+        '</div>' +
+        '<div class="wb-actions">' +
+          '<button class="btn" id="btnDownload">⤓ Download HTML</button>' +
+          '<button class="btn primary" id="btnPublish">▲ Publish for client</button>' +
+          '<button class="btn ghost" id="btnReset">↺ Reset template</button>' +
+        '</div>' +
+        '<div class="wb-health" id="health"></div>' +
+      '</div>' +
+    '</div>';
+
+  /* ------------------------------------------------------- editor render */
+  function editorHtml() {
+    var s = getSite();
+    function sec(key, ic, title, body, closed) {
+      return '<div class="wb-sec'+(closed?" closed":"")+'" data-sec="'+key+'">' +
+        '<div class="wb-sh"><span class="wb-ic">'+ic+'</span>'+title+'<span class="wb-chev">▾</span></div>' +
+        '<div class="wb-body">'+body+'</div></div>';
+    }
+    function inp(id, label, val, ph) {
+      return '<div class="field"><label>'+label+'</label><input class="input wb-in" id="'+id+'" data-k="'+id+'" value="'+esc(val)+'" placeholder="'+(ph||"")+'"></div>';
+    }
+    function txt(id, label, val, ph) {
+      return '<div class="field"><label>'+label+'</label><textarea class="input wb-in" id="'+id+'" data-k="'+id+'" placeholder="'+(ph||"")+'" style="min-height:64px">'+esc(val)+'</textarea></div>';
+    }
+    function toggle(key, label, sub) {
+      var on = s.sec[key];
+      return '<div class="wb-tog"><div><div class="tl">'+label+'</div><div class="tsub">'+sub+'</div></div>' +
+        '<div class="sw'+(on?" on":"")+'" data-tog="'+key+'"></div></div>';
+    }
+
+    // template picker
+    var tpl = '<div class="wb-tpl">' + Object.keys(TEMPLATES).map(function (k) {
+      var t = TEMPLATES[k];
+      return '<div class="wb-tplc'+(s.template===k?" on":"")+'" data-tpl="'+k+'">' +
+        '<div class="swatch" style="background:linear-gradient(135deg,'+t.brand+','+t.accent+')"></div>' +
+        '<div class="tn">'+t.name+'</div><div class="td">'+t.desc+'</div></div>';
+    }).join("") + '</div>';
+
+    // colors + font
+    var brandFont =
+      '<div class="wb-color-row" style="margin-bottom:12px">' +
+        '<div><label style="display:block;font-size:11.5px;color:var(--muted);margin-bottom:6px">Brand color</label>' +
+          '<div class="wb-cw"><input type="color" id="cBrand" value="'+s.brand+'"><span class="hexv" id="cBrandV">'+s.brand.toUpperCase()+'</span></div></div>' +
+        '<div><label style="display:block;font-size:11.5px;color:var(--muted);margin-bottom:6px">Accent color</label>' +
+          '<div class="wb-cw"><input type="color" id="cAccent" value="'+s.accent+'"><span class="hexv" id="cAccentV">'+s.accent.toUpperCase()+'</span></div></div>' +
+      '</div>' +
+      '<div class="field"><label>Font pairing</label><select class="input" id="selFont">' +
+        Object.keys(FONTS).map(function (f){ return '<option'+(s.font===f?" selected":"")+'>'+f+'</option>'; }).join("") +
+      '</select></div>';
+
+    // content
+    var content =
+      inp("biz", "Business name / logo text", s.biz, "e.g. Northline Coffee Co.") +
+      txt("headline", "Hero headline", s.headline) +
+      txt("sub", "Hero subhead", s.sub) +
+      '<div class="wb-cta-row">' +
+        '<div class="field" style="margin:0"><label>Primary CTA</label><input class="input wb-in" data-k="cta1" id="cta1" value="'+esc(s.cta1)+'"></div>' +
+        '<div class="field" style="margin:0"><label>Secondary CTA</label><input class="input wb-in" data-k="cta2" id="cta2" value="'+esc(s.cta2)+'"></div>' +
+      '</div>';
+
+    // sections toggles
+    var toggles =
+      toggle("features", "Features", "Three-up value cards") +
+      toggle("testimonial", "Testimonial", "Social proof quote") +
+      toggle("pricing", "Pricing", "Three-tier price table") +
+      toggle("contact", "Contact / CTA band", "Closing call-to-action");
+
+    // feature editors
+    var feats =
+      inp("f1t", "Card 1 title", s.f1t) + txt("f1b", "Card 1 blurb", s.f1b) +
+      inp("f2t", "Card 2 title", s.f2t) + txt("f2b", "Card 2 blurb", s.f2b) +
+      inp("f3t", "Card 3 title", s.f3t) + txt("f3b", "Card 3 blurb", s.f3b);
+
+    // testimonial editor
+    var testi =
+      txt("quote", "Quote", s.quote) +
+      '<div class="row">' +
+        '<div class="field"><label>Author</label><input class="input wb-in" data-k="author" id="author" value="'+esc(s.author)+'"></div>' +
+        '<div class="field"><label>Author role</label><input class="input wb-in" data-k="authorRole" id="authorRole" value="'+esc(s.authorRole)+'"></div>' +
+      '</div>';
+
+    return sec("tpl", "▦", "Template", tpl) +
+           sec("brand", "◈", "Brand &amp; type", brandFont) +
+           sec("content", "✎", "Hero content", content) +
+           sec("sections", "❏", "Sections", toggles) +
+           sec("feats", "▤", "Feature cards", feats, true) +
+           sec("testi", "❝", "Testimonial", testi, true);
+  }
+
+  function renderEditor() {
+    document.getElementById("editor").innerHTML = editorHtml();
+    wireEditor();
+  }
+
+  /* --------------------------------------------------------- wire inputs */
+  function wireEditor() {
+    // collapsible sections
+    document.querySelectorAll(".wb-sh").forEach(function (h) {
+      h.addEventListener("click", function () { h.parentNode.classList.toggle("closed"); });
+    });
+    // template picks
+    document.querySelectorAll("[data-tpl]").forEach(function (el) {
+      el.addEventListener("click", function () {
+        var k = el.getAttribute("data-tpl");
+        var t = TEMPLATES[k];
+        patch(function (s) {
+          s.template = k; s.brand = t.brand; s.accent = t.accent;
+        });
+        renderEditor(); renderPreview();
+        S.toast('Template → "'+t.name+'".', "ok");
+      });
+    });
+    // text inputs (live)
+    document.querySelectorAll(".wb-in").forEach(function (el) {
+      el.addEventListener("input", function () {
+        var k = el.getAttribute("data-k");
+        patch(function (s){ s[k] = el.value; });
+        renderPreview();
+      });
+    });
+    // colors
+    bindColor("cBrand", "cBrandV", "brand");
+    bindColor("cAccent", "cAccentV", "accent");
+    // font
+    var sf = document.getElementById("selFont");
+    if (sf) sf.addEventListener("change", function () { patch(function (s){ s.font = sf.value; }); renderPreview(); });
+    // toggles
+    document.querySelectorAll("[data-tog]").forEach(function (el) {
+      el.addEventListener("click", function () {
+        var key = el.getAttribute("data-tog");
+        el.classList.toggle("on");
+        patch(function (s){ s.sec[key] = !s.sec[key]; });
+        renderPreview();
+      });
+    });
+  }
+  function bindColor(id, vId, key) {
+    var el = document.getElementById(id); if (!el) return;
+    el.addEventListener("input", function () {
+      var v = el.value;
+      document.getElementById(vId).textContent = v.toUpperCase();
+      patch(function (s){ s[key] = v; });
+      renderPreview();
+    });
+  }
+
+  /* ------------------------------------------------ generated page HTML */
+  function buildPage(s) {
+    var t = TEMPLATES[s.template] || TEMPLATES.bold;
+    var f = FONTS[s.font] || FONTS["Inter / Inter"];
+    var brand = s.brand, accent = s.accent;
+    var dark = t.mode === "dark";
+    var pageBg = dark ? "#0d1017" : "#ffffff";
+    var pageText = dark ? "#e9edf5" : "#1a2030";
+    var mutedText = dark ? "#9aa6bd" : "#5c6577";
+    var cardBg = dark ? "#161b26" : "#ffffff";
+    var cardLine = dark ? "#242c3b" : "#e8eaf0";
+    var softBg = dark ? "#12161f" : "#f7f8fb";
+    var heroText = "#ffffff";
+    var rad = t.radius;
+    var biz = esc(s.biz || "Your Brand");
+    var initial = biz.trim().charAt(0).toUpperCase() || "•";
+
+    function feature(icn, title, blurb) {
+      return '<div class="feat-card">' +
+        '<div class="feat-ic">'+icn+'</div>' +
+        '<h3>'+esc(title)+'</h3><p>'+esc(blurb)+'</p></div>';
+    }
+    function priceCard(name, price, per, feats, hi) {
+      return '<div class="price-card'+(hi?" hi":"")+'">' +
+        (hi ? '<div class="price-badge">Most popular</div>' : '') +
+        '<div class="pc-name">'+name+'</div>' +
+        '<div class="pc-price">'+price+'<span>'+per+'</span></div>' +
+        '<ul>'+feats.map(function(x){return '<li>'+x+'</li>';}).join("")+'</ul>' +
+        '<a class="pc-btn" href="#contact">'+esc(s.cta1 || "Get started")+'</a></div>';
+    }
+
+    var featuresSec = s.sec.features ?
+      '<section class="sec-wrap"><div class="wrap">' +
+        '<div class="sec-head"><span class="eyebrow">Why us</span><h2>Everything the page needs, nothing it doesn\'t.</h2></div>' +
+        '<div class="feat-grid">' +
+          feature("◆", s.f1t, s.f1b) + feature("✦", s.f2t, s.f2b) + feature("❖", s.f3t, s.f3b) +
+        '</div></div></section>' : "";
+
+    var testiSec = s.sec.testimonial ?
+      '<section class="sec-wrap soft"><div class="wrap narrow">' +
+        '<div class="quote-mark">"</div>' +
+        '<blockquote>'+esc(s.quote)+'</blockquote>' +
+        '<div class="q-author"><div class="q-av">'+esc((s.author||"?").charAt(0))+'</div>' +
+          '<div><strong>'+esc(s.author)+'</strong><span>'+esc(s.authorRole)+'</span></div></div>' +
+      '</div></section>' : "";
+
+    var pricingSec = s.sec.pricing ?
+      '<section class="sec-wrap"><div class="wrap">' +
+        '<div class="sec-head"><span class="eyebrow">Pricing</span><h2>Simple plans that scale with you.</h2></div>' +
+        '<div class="price-grid">' +
+          priceCard("Starter", "$29", "/mo", ["1 landing page", "Basic analytics", "Email support"], false) +
+          priceCard("Growth", "$79", "/mo", ["Up to 5 pages", "A/B testing", "Priority support", "Custom domain"], true) +
+          priceCard("Scale", "$199", "/mo", ["Unlimited pages", "Full analytics suite", "Dedicated manager", "White-glove setup"], false) +
+        '</div></div></section>' : "";
+
+    var contactSec = s.sec.contact ?
+      '<section class="sec-wrap cta-band" id="contact"><div class="wrap narrow center">' +
+        '<h2>'+esc(s.headline)+'</h2>' +
+        '<p>'+esc(s.sub)+'</p>' +
+        '<div class="btn-row center">' +
+          '<a class="btn-primary" href="#">'+esc(s.cta1)+'</a>' +
+          '<a class="btn-ghost light" href="#">'+esc(s.cta2)+'</a>' +
+        '</div></div></section>' : "";
+
+    var doc =
+'<!doctype html><html lang="en"><head><meta charset="utf-8">' +
+'<meta name="viewport" content="width=device-width,initial-scale=1">' +
+'<title>'+biz+'</title>' +
+'<link rel="preconnect" href="https://fonts.googleapis.com">' +
+'<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">' +
+'<style>' +
+'*{box-sizing:border-box;margin:0;padding:0}' +
+'html{scroll-behavior:smooth}' +
+'body{font-family:'+f.body+';color:'+pageText+';background:'+pageBg+';line-height:1.6;-webkit-font-smoothing:antialiased}' +
+'.wrap{max-width:'+t.wide+'px;margin:0 auto;padding:0 24px}' +
+'.wrap.narrow{max-width:760px}' +
+'.center{text-align:center}' +
+'a{text-decoration:none;color:inherit}' +
+'h1,h2,h3{font-family:'+f.head+';font-weight:'+t.weightHead+';letter-spacing:'+t.letter+';line-height:1.1}' +
+/* nav */
+'.nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);background:'+(dark?"rgba(13,16,23,.75)":"rgba(255,255,255,.82)")+';border-bottom:1px solid '+cardLine+'}' +
+'.nav .wrap{display:flex;align-items:center;height:66px;gap:16px}' +
+'.logo{display:flex;align-items:center;gap:10px;font-family:'+f.head+';font-weight:800;font-size:18px}' +
+'.logo .mk{width:34px;height:34px;border-radius:'+Math.min(rad,12)+'px;display:grid;place-items:center;color:#fff;font-weight:800;background:linear-gradient(135deg,'+brand+','+accent+')}' +
+'.nav-links{margin-left:auto;display:flex;gap:26px;align-items:center;font-size:14px;font-weight:500;color:'+mutedText+'}' +
+'.nav-links a:hover{color:'+brand+'}' +
+'.nav-cta{background:'+brand+';color:#fff;padding:9px 18px;border-radius:'+Math.min(rad,40)+'px;font-weight:600;font-size:14px}' +
+'@media(max-width:720px){.nav-links a:not(.nav-cta){display:none}}' +
+/* hero */
+'.hero{position:relative;overflow:hidden;padding:'+t.heroPad+'px 0 '+(t.heroPad-16)+'px;color:'+heroText+';' +
+  'background:radial-gradient(1200px 500px at 78% -10%,'+hexA(brand,.55)+',transparent 60%),' +
+  'radial-gradient(900px 460px at 8% 120%,'+hexA(accent,.6)+',transparent 55%),' +
+  'linear-gradient(135deg,'+accent+' 0%,'+mix(accent,brand)+' 55%,'+brand+' 120%)}' +
+'.hero .eyebrow{color:#fff;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.24)}' +
+'.hero h1{font-size:clamp(34px,5.4vw,60px);max-width:14ch;margin-bottom:20px}' +
+'.hero p{font-size:clamp(16px,2vw,21px);max-width:52ch;color:rgba(255,255,255,.9);margin-bottom:30px}' +
+'.hero .btn-row{margin-top:6px}' +
+'.hero-visual{position:absolute;right:-60px;bottom:-80px;width:360px;height:360px;border-radius:50%;background:rgba(255,255,255,.08);filter:blur(2px)}' +
+/* pill / eyebrow */
+'.eyebrow{display:inline-block;font-family:'+f.body+';font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:'+brand+';background:'+hexA(brand,.1)+';padding:6px 12px;border-radius:30px;margin-bottom:16px}' +
+/* buttons */
+'.btn-row{display:flex;gap:14px;flex-wrap:wrap}.btn-row.center{justify-content:center}' +
+'.btn-primary{display:inline-block;background:#fff;color:'+accent+';font-weight:700;font-size:15px;padding:14px 28px;border-radius:'+Math.min(rad,40)+'px;box-shadow:0 12px 30px -10px rgba(0,0,0,.4);transition:transform .15s}' +
+'.btn-primary:hover{transform:translateY(-2px)}' +
+'.cta-band .btn-primary{background:'+brand+';color:#fff}' +
+'.btn-ghost{display:inline-block;font-weight:600;font-size:15px;padding:14px 26px;border-radius:'+Math.min(rad,40)+'px;border:1.5px solid '+cardLine+';color:'+pageText+'}' +
+'.btn-ghost.light{border-color:rgba(255,255,255,.4);color:#fff}' +
+'.btn-ghost:hover{border-color:'+brand+'}' +
+/* sections */
+'.sec-wrap{padding:88px 0}.sec-wrap.soft{background:'+softBg+'}' +
+'.sec-head{text-align:center;max-width:640px;margin:0 auto 52px}' +
+'.sec-head h2{font-size:clamp(26px,3.6vw,40px)}' +
+'.sec-head .eyebrow{margin-bottom:14px}' +
+/* features */
+'.feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}' +
+'@media(max-width:860px){.feat-grid{grid-template-columns:1fr}}' +
+'.feat-card{background:'+cardBg+';border:1px solid '+cardLine+';border-radius:'+rad+'px;padding:32px 28px;transition:.2s}' +
+'.feat-card:hover{transform:translateY(-4px);box-shadow:0 22px 50px -28px '+hexA(brand,.7)+';border-color:'+hexA(brand,.4)+'}' +
+'.feat-ic{width:52px;height:52px;border-radius:'+Math.min(rad,16)+'px;display:grid;place-items:center;font-size:22px;color:#fff;background:linear-gradient(135deg,'+brand+','+accent+');margin-bottom:18px}' +
+'.feat-card h3{font-size:19px;margin-bottom:9px}' +
+'.feat-card p{color:'+mutedText+';font-size:14.5px}' +
+/* testimonial */
+'.quote-mark{font-family:Georgia,serif;font-size:90px;line-height:.6;color:'+brand+';text-align:center;margin-bottom:8px}' +
+'blockquote{font-family:'+f.head+';font-size:clamp(20px,2.8vw,30px);text-align:center;font-weight:600;line-height:1.4;letter-spacing:-.4px;margin-bottom:28px}' +
+'.q-author{display:flex;align-items:center;justify-content:center;gap:13px}' +
+'.q-av{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;background:linear-gradient(135deg,'+brand+','+accent+')}' +
+'.q-author strong{display:block;font-size:15px}.q-author span{font-size:13px;color:'+mutedText+'}' +
+/* pricing */
+'.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}' +
+'@media(max-width:860px){.price-grid{grid-template-columns:1fr;max-width:420px;margin:0 auto}}' +
+'.price-card{position:relative;background:'+cardBg+';border:1px solid '+cardLine+';border-radius:'+rad+'px;padding:34px 28px;display:flex;flex-direction:column}' +
+'.price-card.hi{border-color:'+brand+';box-shadow:0 24px 60px -30px '+hexA(brand,.8)+';transform:scale(1.03)}' +
+'@media(max-width:860px){.price-card.hi{transform:none}}' +
+'.price-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:'+brand+';color:#fff;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:5px 14px;border-radius:20px}' +
+'.pc-name{font-weight:700;font-size:15px;color:'+mutedText+';letter-spacing:.4px;text-transform:uppercase}' +
+'.pc-price{font-family:'+f.head+';font-size:44px;font-weight:800;margin:10px 0 4px;letter-spacing:-1px}' +
+'.pc-price span{font-size:16px;font-weight:500;color:'+mutedText+'}' +
+'.price-card ul{list-style:none;margin:20px 0 26px;flex:1}' +
+'.price-card li{padding:9px 0;font-size:14px;color:'+pageText+';border-bottom:1px solid '+cardLine+';padding-left:26px;position:relative}' +
+'.price-card li:before{content:"✓";position:absolute;left:0;color:'+brand+';font-weight:800}' +
+'.pc-btn{display:block;text-align:center;padding:13px;border-radius:'+Math.min(rad,40)+'px;font-weight:700;font-size:14px;background:'+softBg+';color:'+pageText+';border:1.5px solid '+cardLine+';transition:.16s}' +
+'.price-card.hi .pc-btn{background:'+brand+';color:#fff;border-color:'+brand+'}' +
+'.pc-btn:hover{border-color:'+brand+';color:'+brand+'}.price-card.hi .pc-btn:hover{color:#fff;filter:brightness(1.05)}' +
+/* cta band */
+'.cta-band{background:linear-gradient(135deg,'+accent+','+brand+');color:#fff;padding:96px 0}' +
+'.cta-band h2{font-size:clamp(28px,4vw,44px);margin-bottom:16px}' +
+'.cta-band p{font-size:18px;color:rgba(255,255,255,.9);max-width:46ch;margin:0 auto 30px}' +
+'.cta-band .btn-ghost{color:#fff}' +
+/* footer */
+'.foot{padding:44px 0;border-top:1px solid '+cardLine+';text-align:center;color:'+mutedText+';font-size:13px}' +
+'.foot .logo{justify-content:center;margin-bottom:14px;color:'+pageText+'}' +
+'.foot .made{margin-top:14px;font-size:11.5px;opacity:.7;font-family:"JetBrains Mono",monospace;letter-spacing:.3px}' +
+'</style></head><body>' +
+
+// nav
+'<nav class="nav"><div class="wrap">' +
+  '<a class="logo"><span class="mk">'+initial+'</span>'+biz+'</a>' +
+  '<div class="nav-links"><a href="#">Features</a><a href="#">Pricing</a><a href="#">About</a>' +
+    '<a class="nav-cta" href="#contact">'+esc(s.cta1)+'</a></div>' +
+'</div></nav>' +
+
+// hero
+'<header class="hero"><div class="hero-visual"></div><div class="wrap">' +
+  '<span class="eyebrow">'+esc(t.pill)+'</span>' +
+  '<h1>'+esc(s.headline)+'</h1>' +
+  '<p>'+esc(s.sub)+'</p>' +
+  '<div class="btn-row">' +
+    '<a class="btn-primary" href="#contact">'+esc(s.cta1)+'</a>' +
+    '<a class="btn-ghost light" href="#">'+esc(s.cta2)+'</a>' +
+  '</div>' +
+'</div></header>' +
+
+featuresSec + testiSec + pricingSec + contactSec +
+
+// footer
+'<footer class="foot"><div class="wrap">' +
+  '<a class="logo"><span class="mk">'+initial+'</span>'+biz+'</a>' +
+  '<div>© '+new Date().getFullYear()+' '+biz+'. All rights reserved.</div>' +
+  '<div class="made">Made in Targeted Hub · Accelerated Experiences, LLC</div>' +
+'</div></footer>' +
+
+'</body></html>';
+    return doc;
+  }
+
+  /* ------------------------------------------------- preview + health */
+  function renderPreview() {
+    var s = getSite();
+    var html = buildPage(s);
+    var frame = document.getElementById("pv");
+    frame.srcdoc = html;
+    var url = "https://" + slug(s.biz) + ".targeted.build";
+    document.getElementById("pvUrl").textContent = url;
+    renderHealth(s);
+  }
+
+  function renderHealth(s) {
+    var on = Object.keys(s.sec).filter(function(k){ return s.sec[k]; }).length;
+    var score = 0, notes = [];
+    if ((s.headline||"").length >= 12 && (s.headline||"").length <= 70) score++; else notes.push("headline 12–70 chars reads best");
+    if ((s.sub||"").length >= 30) score++; else notes.push("give the subhead more substance");
+    if (s.cta1) score++; else notes.push("set a primary CTA");
+    if (on >= 3) score++; else notes.push("keep 3+ sections for a full page");
+    var pct = Math.round(score/4*100);
+    var color = pct >= 75 ? "var(--ok)" : (pct >= 50 ? "var(--warn)" : "var(--bad)");
+    var label = pct >= 75 ? "Looks great — ready to hand off." : (pct >= 50 ? "Solid — a couple tweaks left." : "Getting there — fill it out.");
+    document.getElementById("health").innerHTML =
+      '<span class="hd" style="background:'+color+'"></span>' +
+      '<b style="color:var(--text)">'+pct+'% ready</b> · '+label +
+      (notes.length ? ' <span class="muted">— '+esc(notes[0])+'</span>' : '');
+  }
+
+  /* --------------------------------------------------- viewport toggles */
+  document.querySelectorAll("[data-vp]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      document.querySelectorAll("[data-vp]").forEach(function(x){ x.classList.remove("on"); });
+      b.classList.add("on");
+      var host = document.getElementById("frameHost");
+      host.classList.remove("m","t");
+      var vp = b.getAttribute("data-vp");
+      if (vp === "m") host.classList.add("m");
+      if (vp === "t") host.classList.add("t");
+    });
+  });
+
+  /* ---------------------------------------------------------- actions */
+  document.getElementById("btnDownload").addEventListener("click", function () {
+    var s = getSite();
+    var html = buildPage(s);
+    var blob = new Blob([html], { type: "text/html" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = slug(s.biz) + "-landing.html";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 300);
+    S.toast('Downloaded "'+a.download+'" to your browser.', "ok");
+  });
+
+  document.getElementById("btnPublish").addEventListener("click", function () {
+    var s = getSite();
+    var tplName = (TEMPLATES[s.template] || TEMPLATES.bold).name;
+    S.stage("publish", "Publish site — " + s.biz,
+      "Push the " + tplName + " landing page live for the client.",
+      "Publishing to the public is a founder fence.", "Creative");
+    S.toast("Staged to the Approval Desk — nothing goes live without founder sign-off.", "warn");
+  });
+
+  document.getElementById("btnReset").addEventListener("click", function () {
+    var cur = getSite().template || "bold";
+    patch(function (s) {
+      var def = defaultsFor(cur);
+      Object.keys(def).forEach(function (k){ s[k] = def[k]; });
+    });
+    renderEditor(); renderPreview();
+    S.toast('Reset to the "'+(TEMPLATES[cur]||TEMPLATES.bold).name+'" defaults.', "ok");
+  });
+
+  /* ---------------------------------------------------------- helpers */
+  function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function slug(s){ return (String(s||"site").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")) || "site"; }
+  function hexA(hex, a) {
+    var h = hex.replace("#",""); if (h.length===3) h = h.split("").map(function(x){return x+x;}).join("");
+    var r = parseInt(h.substr(0,2),16), g = parseInt(h.substr(2,2),16), b = parseInt(h.substr(4,2),16);
+    return "rgba("+r+","+g+","+b+","+a+")";
+  }
+  function mix(a, b) {
+    function p(hex){ var h=hex.replace("#","");if(h.length===3)h=h.split("").map(function(x){return x+x;}).join("");return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)];}
+    var x=p(a), y=p(b);
+    var m=[Math.round((x[0]+y[0])/2),Math.round((x[1]+y[1])/2),Math.round((x[2]+y[2])/2)];
+    return "rgb("+m[0]+","+m[1]+","+m[2]+")";
+  }
+
+  /* -------------------------------------------------------------- boot */
+  renderEditor();
+  renderPreview();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Approval Desk — Targeted Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="showroom.css">
+</head>
+<body>
+<script src="showroom.js"></script>
+<script>
+(function () {
+  var S = Showroom;
+  var c = S.mount({ active: "approvals.html", crumb: "Approval Desk" });
+  var KIND = { external:"Send", pricing:"Pricing", appointment:"Appointment", publish:"Publish", spend:"Spend", general:"Fence" };
+
+  c.innerHTML =
+    '<div class="page-h"><div class="ph-ic">✓</div><div>' +
+      '<h1>Approval Desk</h1>' +
+      '<div class="sub">Ghost Mode. The org runs itself right up to the fence — only what truly needs you lands here. ' +
+      'The goal is an empty desk.</div>' +
+    '</div><div class="spacer"></div>' +
+      '<div class="card stat" style="min-width:150px;padding:14px 16px"><div class="k-label">Waiting on you</div>' +
+      '<div class="k-val" id="pendct">0</div></div></div>' +
+
+    '<div class="card pad-lg mb" style="margin-bottom:16px;border-color:rgba(74,222,128,.25)">' +
+      '<div class="flex" style="gap:12px;align-items:flex-start">' +
+      '<div class="ph-ic" style="background:rgba(74,222,128,.12);color:var(--c-money)">◎</div>' +
+      '<div><h3 style="font-size:14px">Why this desk stays lean</h3>' +
+      '<p class="small muted mt" style="margin-top:4px;line-height:1.6;max-width:720px">Every seat is built to decide as much as it honestly can under its own confidence bar. ' +
+      'It only stops at a <b>fence</b> — sending to a real person, spending, publishing, setting live pricing, or booking a human onto a calendar. ' +
+      'Full autonomy is the north star; we\'re not there yet, so these few things still route to you. Fewer cards here over time is the scoreboard.</p></div></div></div>' +
+
+    '<div id="pending"></div>' +
+    '<div class="card-head mt" style="margin-top:22px"><h3>Decided this session</h3></div>' +
+    '<div id="decided"></div>';
+
+  function render() {
+    var items = S.approvals();
+    var pending = items.filter(function(a){return a.state==="Pending";});
+    var decided = items.filter(function(a){return a.state!=="Pending";});
+    document.getElementById("pendct").textContent = pending.length;
+
+    var pc = document.getElementById("pending");
+    if (!pending.length) {
+      pc.innerHTML = '<div class="card pad-lg" style="text-align:center;border-style:dashed">' +
+        '<div style="font-size:34px">🗒️</div><h3 class="mt" style="margin-top:8px">Desk is clear.</h3>' +
+        '<p class="muted small mt">Nothing is waiting on you. The org cleared everything under its own bar. That\'s the goal.</p></div>';
+    } else {
+      pc.innerHTML = pending.map(card).join("");
+    }
+    document.getElementById("decided").innerHTML = decided.length
+      ? decided.map(card).join("")
+      : '<div class="muted small" style="padding:8px 2px">No decisions yet this session.</div>';
+
+    // wire buttons
+    document.querySelectorAll("[data-approve]").forEach(function(b){
+      b.addEventListener("click", function(){ S.decideApproval(b.getAttribute("data-approve"), "Approved");
+        S.toast("Approved — staged only. Nothing actually sends from the showroom.", "ok"); render(); });
+    });
+    document.querySelectorAll("[data-deny]").forEach(function(b){
+      b.addEventListener("click", function(){ S.decideApproval(b.getAttribute("data-deny"), "Denied");
+        S.toast("Denied. Sent back to the department.", "warn"); render(); });
+    });
+  }
+
+  function card(a) {
+    var pillCls = a.state==="Approved"?"ok":a.state==="Denied"?"bad":"warn";
+    var actions = a.state==="Pending"
+      ? '<div class="flex mt" style="margin-top:12px;gap:8px"><button class="btn primary sm" data-approve="'+a.id+'">Approve</button>' +
+        '<button class="btn sm" data-deny="'+a.id+'">Deny / send back</button></div>'
+      : '<div class="mt" style="margin-top:10px"><span class="pill '+pillCls+'">'+a.state+'</span></div>';
+    return '<div class="card mb" style="margin-bottom:12px">' +
+      '<div class="flex between"><div class="flex" style="gap:10px">' +
+        '<span class="pill brand">'+(KIND[a.kind]||"Fence")+'</span>' +
+        '<h3 style="font-size:15px">'+a.title+'</h3></div>' +
+        '<span class="pill '+pillCls+'">'+a.state+'</span></div>' +
+      '<p class="small mt" style="margin-top:8px;line-height:1.5">'+a.summary+'</p>' +
+      '<p class="muted small mt" style="margin-top:6px">Fence: '+a.why+' · filed by '+a.by+'</p>' +
+      actions + '</div>';
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

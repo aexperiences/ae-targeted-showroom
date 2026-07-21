@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Operations — Targeted Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="showroom.css">
+</head>
+<body>
+<script src="showroom.js"></script>
+<script>
+(function () {
+  var S = Showroom, d = S.db();
+  var c = S.mount({ active: "operations.html", crumb: "Operations" });
+
+  // ---- derive the cross-department queues (the shop in flight) ----
+  function queues() {
+    var dd = S.db();
+    var pipeline = dd.contacts.filter(function (x){ return x.stage !== "Won"; }).length;
+    var campaigns = dd.campaigns.filter(function (x){ return ["Draft","Scheduled"].indexOf(x.status) >= 0; }).length;
+    var social = dd.social.filter(function (x){ return x.state !== "Posted"; }).length;
+    var assets = dd.assets.filter(function (x){ return x.state !== "Approved"; }).length;
+    return { Pipeline: pipeline, Campaigns: campaigns, Social: social, Assets: assets };
+  }
+  function concludes() { return S.db().bus.filter(function (e){ return e.kind === "conclude"; }); }
+
+  var Q = queues();
+  var inFlight = Q.Pipeline + Q.Campaigns + Q.Social + Q.Assets;
+  // biggest queue = the bottleneck
+  var bottleneck = Object.keys(Q).reduce(function (a, b){ return Q[b] > Q[a] ? b : a; }, "Pipeline");
+  var filed = concludes().length;
+
+  var bnLabel = {
+    Pipeline:  "deals waiting on a next step",
+    Campaigns: "campaigns pre-launch",
+    Social:    "posts pre-publish",
+    Assets:    "creative pre-approval"
+  };
+
+  function stat(label, val, ic, dir, delta) {
+    return '<div class="card stat"><div class="k-ic">'+ic+'</div>' +
+      '<div class="k-label">'+label+'</div><div class="k-val">'+val+'</div>' +
+      '<div class="k-delta '+(dir||"")+'">'+(dir==="up"?"▲ ":dir==="down"?"▼ ":"")+delta+'</div></div>';
+  }
+
+  c.innerHTML =
+    '<div class="page-h"><div class="ph-ic">⛭</div><div>' +
+      '<h1>Operations</h1>' +
+      '<div class="sub">The connective tissue — the desk that keeps the whole shop running. ' +
+      'Dewey (Administrative Executive) owns the <b>filing cabinet</b> and the <b>follow-up calendar</b>. ' +
+      'Continuity lives in the file and on the bus, never in a seat\'s memory.</div>' +
+    '</div></div>' +
+
+    '<div class="grid g-4">' +
+      stat("Items in flight", inFlight, "⇄", "", "across every department") +
+      stat("Filed conclusions", filed, "☷", filed ? "up" : "", filed ? "in the cabinet this session" : "cabinet is empty") +
+      stat("Follow-ups tracked", filed + 2, "☷", "", "on the calendar (2 standing)") +
+      stat("Bottleneck", bottleneck, "▲", (Q[bottleneck] > 0 ? "down" : ""), Q[bottleneck] + " " + bnLabel[bottleneck]) +
+    '</div>' +
+
+    '<div class="grid g-2 mt" style="margin-top:16px;grid-template-columns:1.25fr .95fr">' +
+
+      // ---- FILING CABINET ----
+      '<div class="card pad-lg"><div class="card-head"><h3>Filing cabinet</h3>' +
+        '<span class="pill" id="cabct"></span></div>' +
+        '<p class="muted small mb">Every released or held conclusion the org reaches is packaged, filed here, and given a follow-up. ' +
+        'Nothing drops silently — the file is the memory.</p>' +
+        '<div id="cabinet"></div></div>' +
+
+      // ---- FOLLOW-UP CALENDAR ----
+      '<div class="card pad-lg"><div class="card-head"><h3>Follow-up calendar</h3>' +
+        '<a class="btn sm" href="org.html">Route a question →</a></div>' +
+        '<p class="muted small mb">Two standing rhythms plus a follow-up for every filed conclusion.</p>' +
+        '<div id="calendar"></div></div>' +
+    '</div>' +
+
+    // ---- THROUGHPUT BOARD ----
+    '<div class="card pad-lg mt" style="margin-top:16px"><div class="card-head">' +
+      '<h3>Throughput board</h3><span class="pill">queue size per stage · the bottleneck stands tallest</span></div>' +
+      '<div id="throughput"></div>' +
+      '<p class="muted small mt" style="margin-top:14px"><b style="color:var(--brand-ink)">' + bottleneck + '</b> is the tallest queue right now — ' +
+      Q[bottleneck] + ' ' + bnLabel[bottleneck] + '. That\'s where the shop is backing up.</p>' +
+    '</div>' +
+
+    // ---- CONSULT OPERATIONS ----
+    '<div class="card pad-lg mt" style="margin-top:16px"><div class="card-head">' +
+      '<h3>Consult Operations</h3><span class="pill">Cadence · bar 80%</span></div>' +
+      '<p class="muted small mb">Ask the Operations triad where the shop is bottlenecked. ' +
+      'The Pacemaker (Cadence) gates the answer on an 80% confidence bar; a cross-department conflict escalates to the COO.</p>' +
+      '<button class="btn primary" id="consult">Where\'s the bottleneck slowing the shop? ▾</button> ' +
+      '<a class="btn ghost" href="org.html">Open the bus →</a>' +
+      '<div id="opsout" class="mt"></div>' +
+    '</div>';
+
+  // ---- render filing cabinet ----
+  function renderCabinet() {
+    var cab = document.getElementById("cabinet");
+    var recs = concludes().slice().reverse();
+    document.getElementById("cabct").textContent = recs.length + " on file";
+    if (!recs.length) {
+      cab.innerHTML =
+        '<div class="msg"><div class="mbody muted">The cabinet is empty. It fills as the org works — ' +
+        'head to <a href="org.html" style="color:var(--brand-ink)">the Agent Org</a> and route a question. ' +
+        'Every conclusion the Pacemaker reaches (released or held) gets filed here with its stance, verdict, and a follow-up on the calendar.</div></div>';
+      return;
+    }
+    cab.innerHTML = recs.map(function (e) {
+      var held = !!e.escalate;
+      var topic = String(e.topic || "").split(".")[0] || e.dept;
+      return '<div class="msg' + (held ? '' : ' conclusion') + '">' +
+        '<div class="mhead"><span class="mono" style="opacity:.6">' + topic + ' · filed by ' + fileClerk(e.dept) + '</span>' +
+          '<span class="pill ' + (held ? 'warn' : 'brand') + '" style="margin-left:auto">' + (held ? 'HELD' : 'RELEASED') + '</span></div>' +
+        '<div class="mbody">' + e.body + '</div>' +
+        '<div class="mhead" style="margin-top:7px;margin-bottom:0"><span class="muted small">gate ' + e.gate + '%' +
+          (e.verdict ? ' · confidence ' + e.verdict.conf + '%' : '') + '</span>' +
+          '<span class="muted small" style="margin-left:auto">' + (e.stamp || '') + '</span></div>' +
+      '</div>';
+    }).join("");
+  }
+  function fileClerk(deptKey) {
+    var dp = S.SEATS.depts.filter(function (x){ return x.key === deptKey; })[0];
+    return dp ? dp.ae.name : "Dewey";
+  }
+
+  // ---- render follow-up calendar ----
+  function renderCalendar() {
+    var cal = document.getElementById("calendar");
+    var recs = concludes().slice().reverse();
+    var lines = [];
+    var day = 1;
+    recs.forEach(function (e) {
+      var held = !!e.escalate;
+      var topic = String(e.topic || "").split(".")[0] || e.dept;
+      lines.push(calLine(
+        "Follow up on " + topic + " — " + (held ? "HELD" : "RELEASED"),
+        held ? "Chase the human sign-off; it’s off the founder’s desk waiting." : "Confirm the released call landed and moved.",
+        nearDate(day++),
+        held ? "warn" : "ok"
+      ));
+    });
+    // two seeded standing follow-ups
+    lines.push(calLine("Weekly margin review", "Bern + Penny walk quoted-vs-collected; hold the 67% GPM default.", nextWeekday(3), ""));
+    lines.push(calLine("Campaign QA sweep", "Juno’s desk clears pre-launch key art so Social’s calendar isn’t gated.", nextWeekday(5), ""));
+    cal.innerHTML = '<div class="callist">' + lines.join("") + '</div>';
+  }
+  function calLine(title, sub, date, kind) {
+    return '<div class="seatrow" style="cursor:default;align-items:flex-start">' +
+      '<span class="sd" style="background:var(--c-ops);margin-top:5px"></span>' +
+      '<div style="flex:1"><div class="sn">' + title + '</div>' +
+      '<div class="sr" style="margin-top:2px">' + sub + '</div></div>' +
+      '<span class="pill ' + (kind || '') + '" style="margin-left:auto;white-space:nowrap">' + date + '</span></div>';
+  }
+  function nearDate(offset) {
+    var t = new Date(); t.setDate(t.getDate() + offset);
+    return t.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+  }
+  function nextWeekday(offset) {
+    var t = new Date(); t.setDate(t.getDate() + offset);
+    return t.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
+  }
+
+  // ---- render throughput bars ----
+  function renderThroughput() {
+    var qq = queues();
+    var stages = ["Pipeline", "Campaigns", "Social", "Assets"];
+    var max = Math.max.apply(null, stages.map(function (s){ return qq[s]; }));
+    document.getElementById("throughput").innerHTML =
+      '<div class="bars">' + stages.map(function (s) {
+        var h = max ? Math.round(qq[s] / max * 128) + 10 : 10;
+        return '<div class="bar"><span class="bval">' + qq[s] + '</span>' +
+          '<div class="bfill" style="height:' + h + 'px' +
+          (s === bottleneck ? ';background:linear-gradient(180deg,var(--brand-2),var(--brand))' : '') + '"></div>' +
+          '<span class="blab">' + s + '</span></div>';
+      }).join("") + '</div>';
+  }
+
+  // ---- consult Operations ----
+  document.getElementById("consult").addEventListener("click", function () {
+    var r = S.consult("ops", "Where's the bottleneck slowing the shop?");
+    if (!r) return;
+    var v = r.verdict, pass = r.passed;
+    document.getElementById("opsout").innerHTML =
+      '<div class="card" style="padding:15px;border-color:' + (pass ? "var(--brand)" : "var(--warn)") + '">' +
+        '<div class="flex between"><span class="pill ' + (pass ? "brand" : "warn") + '">' +
+          (pass ? r.dept.pace.name + " released ✓" : r.dept.pace.name + " held — escalates to the COO") + '</span>' +
+          '<span class="mono small muted">' + v.conf + '% vs ' + r.dept.gate + '% bar</span></div>' +
+        '<p class="mt" style="font-size:14px;line-height:1.5">' + v.stance + '</p>' +
+        '<div class="conf"><div class="cbar"><div class="cfill" style="width:' + v.conf + '%"></div></div>' +
+          '<div class="cmeta"><span>confidence <b>' + v.conf + '%</b></span><span>release bar <b>' + r.dept.gate + '%</b></span></div></div>' +
+        '<div class="reasons">' + v.reasons.map(function (rr) {
+          return '<div class="reason"><span class="rt ' + rr.t + '">' + rr.t + '</span><span>' + rr.s + '</span></div>';
+        }).join("") + '</div>' +
+        '<a class="btn sm mt" href="org.html">See it filed on the bus →</a>' +
+      '</div>';
+    // it just filed a new conclusion — refresh the cabinet, calendar, and stat count
+    renderCabinet();
+    renderCalendar();
+    S.toast("Operations conclusion filed to the cabinet.", "ok");
+  });
+
+  renderCabinet();
+  renderCalendar();
+  renderThroughput();
+})();
+</script>
+<style>
+  .callist{display:flex;flex-direction:column;gap:8px;max-height:360px;overflow-y:auto}
+  .callist::-webkit-scrollbar{width:8px}
+  .callist::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+</style>
+</body>
+</html>

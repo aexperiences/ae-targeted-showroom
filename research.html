@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market Research — Targeted Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="showroom.css">
+</head>
+<body>
+<script src="showroom.js"></script>
+<script>
+(function () {
+  var S = Showroom, d = S.db();
+  var c = S.mount({ active: "research.html", crumb: "Market Research" });
+
+  var TAGS = {
+    LIVE:       { cls: "ok",   line: "Sourced. Counts toward the gate." },
+    ESTIMATE:   { cls: "warn", line: "A projection — not a fact. Caps confidence below the bar." },
+    ASSUMPTION: { cls: "bad",  line: "Unverified. Needs a human before it drives spend." }
+  };
+
+  c.innerHTML =
+    '<div class="page-h"><div class="ph-ic">◭</div><div>' +
+      '<h1>Market Research</h1>' +
+      '<div class="sub">Every question comes back a verdict — <b>PURSUE</b> / <b>HOLD</b> / <b>PASS</b> — with its sources shown. ' +
+      'First law of the desk: <b>an estimate is not a fact.</b> PURSUE takes an 80% bar <i>and</i> live data; estimate-only reads route to a human.</div>' +
+      '<div class="spacer"></div>' +
+    '</div></div>' +
+
+    '<div class="grid g-4" id="stats"></div>' +
+
+    '<div class="grid g-2 mt" style="margin-top:16px;grid-template-columns:1.35fr .85fr">' +
+      '<div class="card pad-lg">' +
+        '<div class="card-head"><h3>The evidence file</h3>' +
+          '<span class="pill" id="filect"></span></div>' +
+        '<p class="muted small mb">Nell gathers, Signal reads the pattern, Skeptic checks the sourcing. Every line carries its tag — the color tells you whether it can move money.</p>' +
+        '<div id="findings"></div>' +
+      '</div>' +
+
+      '<div class="card pad-lg">' +
+        '<div class="card-head"><h3>Log a finding</h3>' +
+          '<span class="pill">draft only · Ghost Mode</span></div>' +
+        '<div class="field"><label>Topic</label>' +
+          '<input class="input" id="fTopic" placeholder="e.g. Fitness — January challenge demand"></div>' +
+        '<div class="row">' +
+          '<div class="field"><label>Source tag</label><select class="input" id="fTag">' +
+            '<option value="LIVE">LIVE — sourced fact</option>' +
+            '<option value="ESTIMATE">ESTIMATE — projection</option>' +
+            '<option value="ASSUMPTION">ASSUMPTION — unverified</option>' +
+          '</select></div>' +
+          '<div class="field" style="flex:0 0 120px"><label>Confidence</label>' +
+            '<div class="mono" id="fConfOut" style="font-size:20px;font-weight:700;padding-top:2px">70%</div></div>' +
+        '</div>' +
+        '<div class="field"><input type="range" min="0" max="100" value="70" id="fConf" class="gpm-slider"></div>' +
+        '<div class="field"><label>The read</label>' +
+          '<textarea class="input" id="fNote" placeholder="What does the data actually say? Cite the comparable, the sample, the source."></textarea></div>' +
+        '<div id="fWarn"></div>' +
+        '<button class="btn primary wide" id="fAdd">Add to the evidence file</button>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="card pad-lg mt" style="margin-top:16px;border-color:var(--brand)">' +
+      '<div class="card-head"><h3>Run a verdict through the triad</h3>' +
+        '<span class="pill brand">release bar 80% · PURSUE needs live data</span></div>' +
+      '<p class="muted small mb">Scout is the Pacemaker — the only voice out of the triad. Signal argues the pattern, Skeptic pushes on the sourcing, and Scout gates it. ' +
+        'Clears the bar on live data and it releases to Ivy (COO); short on either and it holds for a human.</p>' +
+      '<div class="row">' +
+        '<div class="field"><label>Your question</label>' +
+          '<input class="input" id="q" placeholder="e.g. Should we commit paid spend to the coffee-reopening play?"></div>' +
+        '<div class="field" style="flex:0 0 auto;display:flex;align-items:flex-end">' +
+          '<button class="btn primary" id="ask" style="height:41px">Send it to Scout ▾</button></div>' +
+      '</div>' +
+      '<div id="verdict"></div>' +
+    '</div>';
+
+  /* ---------------- stats ---------------- */
+  function renderStats() {
+    var d = S.db();
+    var r = d.research;
+    var live = r.filter(function (x){ return x.tag === "LIVE"; }).length;
+    var est  = r.filter(function (x){ return x.tag === "ESTIMATE"; }).length;
+    var asm  = r.filter(function (x){ return x.tag === "ASSUMPTION"; }).length;
+    document.getElementById("stats").innerHTML =
+      stat("Findings on file", r.length, "◭", "", "the whole evidence file") +
+      stat("Tagged LIVE", live, "●", "up", "sourced — can move money", "ok") +
+      stat("Tagged ESTIMATE", est, "◐", "", "projection — caps the bar", "warn") +
+      stat("Tagged ASSUMPTION", asm, "○", "", "needs a human first", "bad");
+  }
+  function stat(label, val, ic, dir, delta, tone) {
+    var col = tone ? "var(--"+tone+")" : "var(--text)";
+    return '<div class="card stat"><div class="k-ic" style="color:'+col+'">'+ic+'</div>' +
+      '<div class="k-label">'+label+'</div>' +
+      '<div class="k-val" style="color:'+col+'">'+val+'</div>' +
+      '<div class="k-delta '+(dir||"")+'">'+(dir==="up"?"▲ ":"")+delta+'</div></div>';
+  }
+
+  /* ---------------- findings list ---------------- */
+  function renderFindings() {
+    var d = S.db();
+    var wrap = document.getElementById("findings");
+    document.getElementById("filect").textContent = d.research.length + " findings";
+    if (!d.research.length) {
+      wrap.innerHTML = '<div class="msg"><div class="mbody muted">The file is empty. Log a finding to the right — tag it honestly and the desk will hold the line for you.</div></div>';
+      return;
+    }
+    wrap.innerHTML = d.research.slice().reverse().map(findingCard).join("");
+  }
+  function findingCard(r) {
+    var t = TAGS[r.tag] || TAGS.ASSUMPTION;
+    var conf = Math.max(0, Math.min(100, Number(r.conf) || 0));
+    var capped = (r.tag !== "LIVE") && conf >= 80;
+    return '<div class="card" style="padding:15px;margin-bottom:11px">' +
+      '<div class="flex between" style="align-items:flex-start;gap:12px">' +
+        '<div style="min-width:0"><h3 style="font-size:14px">'+esc(r.topic)+'</h3>' +
+          '<div class="muted small" style="margin-top:2px">'+t.line+'</div></div>' +
+        '<span class="pill '+t.cls+'"><span class="dot"></span>'+r.tag+'</span>' +
+      '</div>' +
+      '<p class="mbody mt" style="font-size:13px;line-height:1.5;color:var(--text-2)">'+esc(r.note)+'</p>' +
+      '<div class="conf"><div class="cbar"><div class="cfill" style="width:'+conf+'%"></div></div>' +
+        '<div class="cmeta"><span>confidence <b>'+conf+'%</b></span>' +
+        '<span>'+(capped ? "over 80% but not LIVE — <b style=\'color:var(--warn)\'>capped below the gate</b>"
+                          : (r.tag === "LIVE" ? "<b style=\'color:var(--ok)\'>counts toward the gate</b>" : "release bar <b>80%</b>"))+'</span></div></div>' +
+    '</div>';
+  }
+
+  /* ---------------- composer ---------------- */
+  var confIn = document.getElementById("fConf");
+  var confOut = document.getElementById("fConfOut");
+  var tagIn = document.getElementById("fTag");
+  var warnBox = document.getElementById("fWarn");
+
+  function syncWarn() {
+    var conf = Number(confIn.value);
+    var tag = tagIn.value;
+    confOut.textContent = conf + "%";
+    if (tag !== "LIVE" && conf >= 80) {
+      warnBox.innerHTML =
+        '<div class="reason" style="margin-bottom:12px;padding:9px 11px;border:1px solid rgba(251,191,36,.3);border-radius:9px;background:rgba(251,191,36,.07)">' +
+          '<span class="rt assumption">note</span>' +
+          '<span>A <b>'+tag+'</b> read can\'t carry '+conf+'% into a verdict — an estimate is not a fact. ' +
+          'Logged as-is, but the triad caps it below the 80% gate until it\'s sourced LIVE.</span></div>';
+    } else {
+      warnBox.innerHTML = "";
+    }
+  }
+  confIn.addEventListener("input", syncWarn);
+  tagIn.addEventListener("change", syncWarn);
+  syncWarn();
+
+  document.getElementById("fAdd").addEventListener("click", function () {
+    var topic = document.getElementById("fTopic").value.trim();
+    var note = document.getElementById("fNote").value.trim();
+    var tag = tagIn.value;
+    var conf = Number(confIn.value);
+    if (!topic) { S.toast("Give the finding a topic.", "warn"); return; }
+    if (!note)  { S.toast("Add the read — what does the data say?", "warn"); return; }
+    S.save(function (dd) {
+      dd.research.push({ id: "r" + Date.now(), topic: topic, tag: tag, note: note, conf: conf });
+    });
+    document.getElementById("fTopic").value = "";
+    document.getElementById("fNote").value = "";
+    var kind = tag === "LIVE" ? "ok" : "warn";
+    S.toast(tag === "LIVE" ? "Filed LIVE — it can move money."
+                           : "Filed "+tag+" — flagged, caps below the gate.", kind);
+    renderStats(); renderFindings();
+  });
+
+  /* ---------------- run a verdict ---------------- */
+  function verdictHtml(r) {
+    var v = r.verdict, pass = r.passed, gate = r.dept.gate, pace = r.dept.pace.name;
+    var out =
+      '<div class="card mt" style="padding:18px;margin-top:16px;border-color:'+(pass?"var(--brand)":"var(--warn)")+'">' +
+        '<div class="flex between" style="align-items:flex-start;gap:12px">' +
+          '<span class="pill '+(pass?"brand":"warn")+'"><span class="dot"></span>' +
+            (pass ? pace+" RELEASED it ✓" : pace+" HELD it") + '</span>' +
+          '<span class="mono small muted">'+v.conf+'% vs '+gate+'% bar</span>' +
+        '</div>' +
+        '<p class="mt" style="font-size:15px;line-height:1.5;font-weight:600">'+esc(v.stance)+'</p>' +
+        '<div class="conf"><div class="cbar"><div class="cfill" style="width:'+v.conf+'%"></div></div>' +
+          '<div class="cmeta"><span>confidence <b>'+v.conf+'%</b></span>' +
+          '<span>release bar <b>'+gate+'%</b> · <b style="color:'+(pass?"var(--ok)":"var(--warn)")+'">'+(pass?"RELEASED":"HELD")+'</b></span></div></div>' +
+        '<div class="reasons">'+ v.reasons.map(function (rr) {
+          return '<div class="reason"><span class="rt '+rr.t+'">'+rr.t+'</span><span>'+esc(rr.s)+'</span></div>';
+        }).join("") +'</div>';
+
+    if (!pass) {
+      out +=
+        '<div class="reason" style="margin-top:14px;padding:12px 13px;border:1px solid rgba(248,113,113,.3);border-radius:10px;background:rgba(248,113,113,.06);align-items:flex-start">' +
+          '<span class="rt assumption" style="background:rgba(248,113,113,.15);color:var(--bad)">held</span>' +
+          '<span><b>Needs a human — not enough live data.</b> Scout won\'t call PURSUE on estimate-only reads, ' +
+          'so the verdict routes up to the founder with its reasons attached. That refusal <i>is</i> the product: blank beats confident-wrong.</span>' +
+        '</div>';
+    } else {
+      out +=
+        '<div class="reason" style="margin-top:14px;padding:12px 13px;border:1px solid rgba(74,222,128,.3);border-radius:10px;background:rgba(74,222,128,.06);align-items:flex-start">' +
+          '<span class="rt data">cleared</span>' +
+          '<span>Cleared the 80% bar on live data. Scout releases it to <b>Ivy (COO)</b> — a verdict you can actually spend behind.</span>' +
+        '</div>';
+    }
+    out += '<a class="btn sm mt" href="org.html">See it on the bus →</a>' +
+      '</div>';
+    return out;
+  }
+
+  function ask() {
+    var q = document.getElementById("q").value;
+    var r = S.consult("research", q);
+    if (!r) return;
+    document.getElementById("verdict").innerHTML = verdictHtml(r);
+    S.toast(r.passed ? (r.dept.pace.name + " released to Ivy (COO).")
+                     : (r.dept.pace.name + " held — routed to Anthony."),
+            r.passed ? "ok" : "warn");
+  }
+  document.getElementById("ask").addEventListener("click", ask);
+  document.getElementById("q").addEventListener("keydown", function (e){ if (e.key === "Enter") ask(); });
+
+  function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  renderStats();
+  renderFindings();
+})();
+</script>
+</body>
+</html>

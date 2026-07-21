@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Books &amp; Margins — Targeted Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="showroom.css">
+</head>
+<body>
+<script src="showroom.js"></script>
+<script>
+(function () {
+  var S = Showroom, d = S.db();
+  var c = S.mount({ active: "books.html", crumb: "Books & Margins" });
+
+  var quoted = d.quotes.reduce(function(s,x){return s+(x.price||0);},0);
+  var collected = d.quotes.reduce(function(s,x){return s+(x.actualCollect||0);},0);
+  var wonVal = d.contacts.filter(function(x){return x.stage==="Won";}).reduce(function(s,x){return s+x.value;},0);
+  var adSpend = d.campaigns.reduce(function(s,x){return s+(x.spend||0);},0);
+  var costs = d.quotes.reduce(function(s,x){return s+(x.actualCost||0);},0) + adSpend;
+  var profit = collected - costs;
+
+  c.innerHTML =
+    '<div class="page-h"><div class="ph-ic">▤</div><div>' +
+      '<h1>Books &amp; Margins</h1>' +
+      '<div class="sub">The money spine — quoted vs collected, real cost, and what actually cleared. ' +
+      'Tagged honestly: Stripe/QuickBooks aren\'t wired in the showroom, so these are the numbers the hub can prove.</div>' +
+    '</div></div>' +
+
+    '<div class="grid g-4">' +
+      stat("Quoted (book)", S.money(quoted), "ESTIMATE") +
+      stat("Collected", S.money(collected), "LIVE") +
+      stat("Real cost", S.money(costs), "LIVE") +
+      stat("Gross profit", S.money(profit), profit>=0?"LIVE":"WATCH") +
+    '</div>' +
+
+    '<div class="grid g-2 mt" style="margin-top:16px;grid-template-columns:1.2fr .8fr">' +
+      '<div class="card pad-lg"><div class="card-head"><h3>Revenue by client</h3>' +
+        '<span class="pill">collected · this session</span></div><div id="barsC"></div></div>' +
+      '<div class="card pad-lg"><div class="card-head"><h3>Margin discipline</h3></div>' +
+        '<p class="small muted mb" style="line-height:1.6">Accounting runs the highest confidence bar in the org — <b>85%</b>. A wrong number pollutes every decision downstream, so the Pacemaker (Pace) holds and escalates rather than ship a guess.</p>' +
+        '<div class="brk"><span>Default gross margin</span><span class="bv">67%</span></div>' +
+        '<div class="brk"><span>Ad spend passed through</span><span class="bv">'+S.money(adSpend)+'</span></div>' +
+        '<div class="brk"><span>Collected ÷ quoted</span><span class="bv">'+(quoted?Math.round(collected/quoted*100):0)+'%</span></div>' +
+        '<a class="btn sm mt" href="estimator.html">Open the Estimating Machine →</a>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="card pad-lg mt" style="margin-top:16px"><div class="card-head"><h3>Ledger — jobs &amp; campaigns</h3>' +
+      '<span class="pill">Ghost Mode · nothing moves money</span></div>' +
+      '<table class="tbl"><thead><tr><th>Item</th><th>Type</th><th class="num">Quoted</th><th class="num">Cost</th><th class="num">Collected</th><th>Tag</th></tr></thead>' +
+      '<tbody id="rows"></tbody></table></div>';
+
+  function stat(label, val, tag) {
+    var cls = tag==="LIVE"?"ok":tag==="WATCH"?"bad":"warn";
+    return '<div class="card stat"><span class="pill '+cls+'" style="float:right">'+tag+'</span>' +
+      '<div class="k-label">'+label+'</div><div class="k-val">'+val+'</div></div>';
+  }
+
+  // revenue bars by collected
+  var rev = d.quotes.filter(function(q){return q.actualCollect;})
+    .concat(d.contacts.filter(function(x){return x.stage==="Won";}).map(function(x){return {client:x.name, actualCollect:x.value};}));
+  var maxR = Math.max.apply(null, rev.map(function(r){return r.actualCollect;}).concat([1]));
+  document.getElementById("barsC").innerHTML = '<div class="bars">' + rev.map(function(r){
+    var h = Math.round(r.actualCollect/maxR*130)+10;
+    return '<div class="bar"><span class="bval">'+S.money(r.actualCollect)+'</span>' +
+           '<div class="bfill" style="height:'+h+'px;background:linear-gradient(180deg,var(--c-money),#2f9e57)"></div>' +
+           '<span class="blab">'+r.client.split(" ")[0]+'</span></div>';
+  }).join("") + '</div>';
+
+  // ledger rows
+  var rows = d.quotes.map(function(q){
+    return '<tr><td><b>'+q.client+'</b></td><td>Job</td><td class="num">'+S.money(q.price)+'</td>' +
+      '<td class="num">'+(q.actualCost?S.money(q.actualCost):"—")+'</td>' +
+      '<td class="num">'+(q.actualCollect?S.money(q.actualCollect):"—")+'</td>' +
+      '<td><span class="pill '+(q.actualCollect?"ok":"warn")+'">'+(q.actualCollect?"LIVE":"OPEN")+'</span></td></tr>';
+  }).concat(d.campaigns.filter(function(m){return m.spend;}).map(function(m){
+    return '<tr><td><b>'+m.name+'</b></td><td>Campaign spend</td><td class="num">—</td>' +
+      '<td class="num">'+S.money(m.spend)+'</td><td class="num">—</td>' +
+      '<td><span class="pill">'+m.channel+'</span></td></tr>';
+  }));
+  document.getElementById("rows").innerHTML = rows.join("");
+})();
+</script>
+</body>
+</html>

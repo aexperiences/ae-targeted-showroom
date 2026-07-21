@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Command Center — Targeted Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="showroom.css">
+</head>
+<body>
+<script src="showroom.js"></script>
+<script>
+(function () {
+  var S = Showroom, d = S.db();
+  var c = S.mount({ active: "dashboard.html", crumb: "Command Center" });
+
+  var pipeVal = d.contacts.filter(function(x){return ["Proposal","Negotiation","Discovery"].indexOf(x.stage)>=0;})
+                          .reduce(function(s,x){return s+x.value;},0);
+  var won = d.contacts.filter(function(x){return x.stage==="Won";}).reduce(function(s,x){return s+x.value;},0);
+  var live = d.campaigns.filter(function(x){return x.status==="Live";}).length;
+  var queued = d.social.filter(function(x){return x.state!=="Posted";}).length;
+
+  c.innerHTML =
+    '<div class="page-h"><div class="ph-ic">◎</div><div>' +
+      '<h1>Good to see you, Maya.</h1>' +
+      '<div class="sub">Here\'s the whole agency at a glance — everything below is live and clickable.</div>' +
+    '</div></div>' +
+
+    '<div class="grid g-4">' +
+      stat("Open pipeline", S.money(pipeVal), "◆", "up", "3 deals late-stage") +
+      stat("Won this quarter", S.money(won), "✓", "up", "Pike Street signed") +
+      stat("Live campaigns", live, "◈", "", "2 more scheduled") +
+      stat("Posts queued", queued, "❋", "", "awaiting approval") +
+    '</div>' +
+
+    '<div class="grid g-2 mt" style="margin-top:16px;grid-template-columns:1.3fr .9fr">' +
+      '<div class="card pad-lg"><div class="card-head"><h3>Pipeline snapshot</h3>' +
+        '<a class="btn sm" href="pipeline.html">Open CRM →</a></div><div id="pipe"></div></div>' +
+      '<div class="card pad-lg"><div class="card-head"><h3>Ask the Org</h3>' +
+        '<a class="btn sm" href="org.html">Open the bus →</a></div>' +
+        '<p class="muted small mb">Route a question through the agent org. The triad argues it, the Pacemaker gates it on a confidence bar, and it either clears to the COO or escalates to you.</p>' +
+        '<div class="field"><select class="input" id="dept">' +
+          S.SEATS.depts.map(function(x){return "<option value='"+x.key+"'>"+x.name+" (bar "+x.gate+"%)</option>";}).join("") +
+        '</select></div>' +
+        '<div class="field"><input class="input" id="q" placeholder="e.g. Which deals should we close first?"></div>' +
+        '<button class="btn primary wide" id="ask">Route it through the org</button>' +
+        '<div id="ans" class="mt"></div>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="grid g-3 mt" style="margin-top:16px">' +
+      quick("Estimating Machine", "Price a job at your real margin.", "estimator.html", "∑") +
+      quick("Campaigns", live+" live · full blast composer.", "campaigns.html", "◈") +
+      quick("Books & Margins", "Quoted vs collected, live P&L.", "books.html", "▤") +
+    '</div>';
+
+  // pipeline mini-table
+  var stages = ["Lead","Discovery","Proposal","Negotiation","Won"];
+  var byStage = {}; stages.forEach(function(s){byStage[s]=0;});
+  d.contacts.forEach(function(x){ byStage[x.stage] = (byStage[x.stage]||0)+1; });
+  var max = Math.max.apply(null, stages.map(function(s){return byStage[s];}));
+  document.getElementById("pipe").innerHTML =
+    '<div class="bars">' + stages.map(function(s){
+      var h = max ? Math.round(byStage[s]/max*130)+10 : 10;
+      return '<div class="bar"><span class="bval">'+byStage[s]+'</span>' +
+             '<div class="bfill" style="height:'+h+'px"></div><span class="blab">'+s+'</span></div>';
+    }).join("") + '</div>';
+
+  // ask the org
+  document.getElementById("ask").addEventListener("click", function () {
+    var dept = document.getElementById("dept").value;
+    var q = document.getElementById("q").value;
+    var r = S.consult(dept, q);
+    if (!r) return;
+    var v = r.verdict, pass = r.passed;
+    document.getElementById("ans").innerHTML =
+      '<div class="card" style="padding:15px;border-color:'+(pass?"var(--brand)":"var(--warn)")+'">' +
+        '<div class="flex between"><span class="pill '+(pass?"brand":"warn")+'">'+
+          (pass? r.dept.pace.name+" released ✓" : r.dept.pace.name+" held — needs a human")+'</span>' +
+          '<span class="mono small muted">'+v.conf+'% vs '+r.dept.gate+'% bar</span></div>' +
+        '<p class="mt" style="font-size:14px;line-height:1.5">'+v.stance+'</p>' +
+        confBar(v.conf, r.dept.gate) +
+        '<div class="reasons">'+ v.reasons.map(function(rr){
+          return '<div class="reason"><span class="rt '+rr.t+'">'+rr.t+'</span><span>'+rr.s+'</span></div>';
+        }).join("") +'</div>' +
+        '<a class="btn sm mt" href="org.html">See it on the bus →</a>' +
+      '</div>';
+  });
+
+  function stat(label, val, ic, dir, delta) {
+    return '<div class="card stat"><div class="k-ic">'+ic+'</div>' +
+      '<div class="k-label">'+label+'</div><div class="k-val">'+val+'</div>' +
+      '<div class="k-delta '+(dir||"")+'">'+(dir==="up"?"▲ ":"")+delta+'</div></div>';
+  }
+  function quick(t, s, href, ic) {
+    return '<a href="'+href+'" class="card" style="display:block"><div class="flex" style="gap:12px">' +
+      '<div class="ph-ic" style="width:40px;height:40px;font-size:19px">'+ic+'</div>' +
+      '<div><h3 style="font-size:14px">'+t+'</h3><div class="muted small mt" style="margin-top:3px">'+s+'</div></div>' +
+      '</div></a>';
+  }
+  function confBar(conf, gate) {
+    return '<div class="conf"><div class="cbar"><div class="cfill" style="width:'+conf+'%"></div></div>' +
+      '<div class="cmeta"><span>confidence <b>'+conf+'%</b></span><span>release bar <b>'+gate+'%</b></span></div></div>';
+  }
+})();
+</script>
+</body>
+</html>

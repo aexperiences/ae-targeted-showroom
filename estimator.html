@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Estimating Machine — Targeted Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="showroom.css">
+</head>
+<body>
+<script src="showroom.js"></script>
+<script>
+(function () {
+  var S = Showroom;
+  var c = S.mount({ active: "estimator.html", crumb: "Estimating Machine" });
+
+  c.innerHTML =
+    '<div class="page-h"><div class="ph-ic">∑</div><div>' +
+      '<h1>Estimating Machine</h1>' +
+      '<div class="sub">Price any job at your real margin. The math is the same one the whole hub runs on: ' +
+      '<span class="mono">price = (costs + your pay) ÷ (1 − GPM%)</span>. Move the margin and it re-prices live.</div>' +
+    '</div></div>' +
+
+    '<div class="grid g-2" style="grid-template-columns:1fr 1fr">' +
+      '<div class="card pad-lg">' +
+        '<div class="field"><label>Client / job</label><input class="input" id="client" placeholder="e.g. Northline Coffee — rebrand + paid social"></div>' +
+        '<div class="row">' +
+          '<div class="field"><label>Hard costs ($) — media, print, subs</label><input class="input mono" id="costs" type="number" value="2600"></div>' +
+          '<div class="field"><label>Your pay ($) — team time</label><input class="input mono" id="pay" type="number" value="3200"></div>' +
+        '</div>' +
+        '<div class="field"><label>Gross profit margin — <b id="gpmv">67</b>%</label>' +
+          '<input class="gpm-slider" id="gpm" type="range" min="20" max="85" value="67"></div>' +
+        '<button class="btn primary wide" id="save">Save quote to the pipeline</button>' +
+      '</div>' +
+      '<div><div class="est-out mb">' +
+        '<div class="eo-lab">Quote the client</div>' +
+        '<div class="eo-big" id="price">$0</div>' +
+        '<div class="brk mt" style="margin-top:14px"><span>Hard costs</span><span class="bv" id="bcost">$0</span></div>' +
+        '<div class="brk"><span>Your pay</span><span class="bv" id="bpay">$0</span></div>' +
+        '<div class="brk"><span>Gross profit</span><span class="bv" id="bprofit" style="color:var(--c-money)">$0</span></div>' +
+        '<div class="brk"><span>Effective margin</span><span class="bv" id="bmargin">0%</span></div>' +
+      '</div>' +
+      '<div class="card"><div class="card-head"><h3>Why margin, not markup</h3></div>' +
+        '<p class="small muted" style="line-height:1.6">Marking costs up by 67% leaves you thinner than you think once your own time is in. Pricing <i>to</i> a 67% gross margin means costs + pay are only a third of the invoice — the rest is the profit that keeps the doors open. That is the difference between a busy agency and a paid one.</p>' +
+      '</div></div>' +
+    '</div>' +
+
+    '<div class="card pad-lg mt" style="margin-top:16px"><div class="card-head"><h3>Saved quotes · job-costing</h3>' +
+      '<span class="pill">quoted vs actual</span></div>' +
+      '<table class="tbl"><thead><tr><th>Client</th><th>Scope</th><th class="num">Quoted</th>' +
+      '<th class="num">Actual cost</th><th class="num">Collected</th><th class="num">Real margin</th></tr></thead>' +
+      '<tbody id="qrows"></tbody></table></div>';
+
+  var gpm = document.getElementById("gpm");
+  function recalc() {
+    var costs = +document.getElementById("costs").value || 0;
+    var pay = +document.getElementById("pay").value || 0;
+    var g = +gpm.value;
+    document.getElementById("gpmv").textContent = g;
+    var price = S.priceQuote(costs, pay, g);
+    var profit = price - costs - pay;
+    document.getElementById("price").textContent = S.money(price);
+    document.getElementById("bcost").textContent = S.money(costs);
+    document.getElementById("bpay").textContent = S.money(pay);
+    document.getElementById("bprofit").textContent = S.money(profit);
+    document.getElementById("bmargin").textContent = price ? Math.round(profit/price*100)+"%" : "0%";
+  }
+  ["costs","pay"].forEach(function(id){ document.getElementById(id).addEventListener("input", recalc); });
+  gpm.addEventListener("input", recalc);
+  recalc();
+
+  document.getElementById("save").addEventListener("click", function () {
+    var client = document.getElementById("client").value.trim() || "Untitled job";
+    var costs = +document.getElementById("costs").value || 0;
+    var pay = +document.getElementById("pay").value || 0;
+    var g = +gpm.value;
+    var price = S.priceQuote(costs, pay, g);
+    S.save(function(d){ d.quotes.push({ id:"q"+Date.now(), client:client, scope:"New quote", costs:costs, pay:pay, gpm:g, actualCost:0, actualCollect:0, price:price }); });
+    S.toast("Quote saved — "+S.money(price)+" for "+client, "ok");
+    renderQuotes();
+  });
+
+  function renderQuotes() {
+    var d = S.db();
+    document.getElementById("qrows").innerHTML = d.quotes.map(function (q) {
+      var realMargin = q.actualCollect ? Math.round((q.actualCollect - q.actualCost) / q.actualCollect * 100) + "%"
+                                       : '<span class="muted">pending</span>';
+      return '<tr><td><b>'+q.client+'</b></td><td class="muted small">'+q.scope+'</td>' +
+        '<td class="num">'+S.money(q.price)+'</td>' +
+        '<td class="num">'+(q.actualCost?S.money(q.actualCost):"—")+'</td>' +
+        '<td class="num">'+(q.actualCollect?S.money(q.actualCollect):"—")+'</td>' +
+        '<td class="num" style="color:var(--c-money)">'+realMargin+'</td></tr>';
+    }).join("");
+  }
+  renderQuotes();
+})();
+</script>
+</body>
+</html>

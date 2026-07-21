@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Law · Business Law — Targeted Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="showroom.css">
+</head>
+<body>
+<script src="showroom.js"></script>
+<script>
+(function () {
+  var S = Showroom;
+  var c = S.mount({ active: "law.html", crumb: "Law · Business Law" });
+
+  var RISK = {
+    High:   { cls: "bad",  line: "Real legal exposure — a licensed attorney signs off." },
+    Medium: { cls: "warn", line: "Reviewable in-house; confirm the terms with counsel." },
+    Low:    { cls: "ok",   line: "Routine — advisory read is enough for now." }
+  };
+
+  /* Static, hand-written clause guidance — business-law flavored, agency context.
+     Every entry ENDS with the same refrain: confirm with a licensed attorney. */
+  var CLAUSES = {
+    nda: {
+      name: "NDA (mutual / one-way)",
+      watch: "Define \"Confidential Information\" tightly and make the obligation mutual when you're trading pitch decks and client data both ways. Watch the term length (2–3 years is normal for marketing work), carve-outs for anything already public or independently developed, and a clean return-or-destroy clause at the end. Avoid perpetual confidentiality on ordinary business info — it's rarely enforceable and it scares good clients off. Always confirm with a licensed attorney."
+    },
+    msa: {
+      name: "Services agreement / MSA",
+      watch: "The MSA is the frame; the SOW is where the money and scope live — keep them separate so you can re-scope without re-papering the whole deal. Nail down payment terms, a change-order process (scope creep is where agency margin dies), an approval/sign-off workflow, and who eats the cost of client-caused delays. Cap your liability at fees paid and exclude indirect/consequential damages. Always confirm with a licensed attorney."
+    },
+    ip: {
+      name: "IP ownership / work-for-hire",
+      watch: "Client work is usually \"work made for hire,\" but that doctrine doesn't automatically cover everything — pair it with a present-tense assignment (\"Agency hereby assigns\"). Carve OUT your pre-existing tools, templates, and know-how, and grant the client a license to those rather than ownership. Assignment should be conditioned on full payment — no pay, no transfer. Watch third-party assets (stock, fonts, music) and pass through only the license you actually hold. Always confirm with a licensed attorney."
+    },
+    termination: {
+      name: "Termination / kill fee",
+      watch: "Spell out termination for convenience (notice period — 30 days is typical for retainers) AND for cause (material breach with a cure window). Protect work-in-progress with a kill fee or payment for work performed through the termination date. Define what transfers on exit — files, access, passwords — and make that transfer contingent on the final invoice clearing. Add a short survival clause so confidentiality, IP, and payment terms outlive the contract. Always confirm with a licensed attorney."
+    },
+    payment: {
+      name: "Payment terms",
+      watch: "State the amount, the schedule, and the trigger for each invoice (milestone vs. monthly retainer). Add late-payment interest and a right to pause work on non-payment — leverage you'll want and rarely have to use. For ad spend, make it crystal clear whether media budget is pass-through (client-funded, not your revenue) so it doesn't inflate your books or your tax base. Watch auto-renewal and price-escalator language on retainers. Always confirm with a licensed attorney."
+    }
+  };
+
+  c.innerHTML =
+    '<div class="page-h"><div class="ph-ic">§</div><div>' +
+      '<h1>Law · Business Law</h1>' +
+      '<div class="sub">Advisory desk for the shop\'s contracts, claims, and compliance. It runs an <b>85% bar</b> — ' +
+      'and it\'s designed to come in <i>under</i> that bar on anything with real exposure, because the honest move is to hand those to a human.</div>' +
+      '<div class="spacer"></div>' +
+    '</div></div>' +
+
+    /* ---- persistent disclaimer banner ---- */
+    '<div class="card" style="border-color:rgba(251,191,36,.4);background:linear-gradient(135deg,rgba(251,191,36,.09),var(--ink-2));margin-bottom:16px;display:flex;gap:14px;align-items:flex-start">' +
+      '<div class="ph-ic" style="width:40px;height:40px;font-size:19px;background:rgba(251,191,36,.14);border-color:rgba(251,191,36,.35);color:var(--warn);flex:0 0 40px">⚠</div>' +
+      '<div><h3 style="font-size:14.5px;color:var(--warn)">Advisory only — not legal advice.</h3>' +
+      '<p class="small" style="color:var(--text-2);margin-top:3px;line-height:1.55">This department is <b>not a lawyer</b>. It reads risk, packages the sources, and holds a high bar — but a <b>licensed attorney owns every sign-off</b>. Anything with real legal exposure routes to a human. Nothing here creates an attorney–client relationship.</p></div>' +
+    '</div>' +
+
+    '<div class="grid g-4" id="stats"></div>' +
+
+    '<div class="grid g-2 mt" style="margin-top:16px;grid-template-columns:1.35fr .85fr">' +
+      /* ---- matters ---- */
+      '<div class="card pad-lg">' +
+        '<div class="card-head"><h3>The docket</h3>' +
+          '<span class="pill" id="docket"></span>' +
+          '<button class="btn sm" id="addBtn">+ Add matter</button></div>' +
+        '<p class="muted small mb">Counsel owns the read; Docket packages the risk and sources. A <b>High</b>-risk open matter is never resolved in-house — it routes to a licensed attorney.</p>' +
+        '<div id="matters"></div>' +
+      '</div>' +
+
+      /* ---- clause helper ---- */
+      '<div class="card pad-lg">' +
+        '<div class="card-head"><h3>Contract clause helper</h3>' +
+          '<span class="pill">plain-English</span></div>' +
+        '<p class="muted small mb">Pick a clause and get the business-law watch-list for an agency deal. Guidance only — every read ends the same way.</p>' +
+        '<div class="field"><label>Clause type</label><select class="input" id="clauseSel">' +
+          '<option value="nda">NDA (mutual / one-way)</option>' +
+          '<option value="msa">Services agreement / MSA</option>' +
+          '<option value="ip">IP ownership / work-for-hire</option>' +
+          '<option value="termination">Termination / kill fee</option>' +
+          '<option value="payment">Payment terms</option>' +
+        '</select></div>' +
+        '<div id="clauseOut"></div>' +
+      '</div>' +
+    '</div>' +
+
+    /* ---- consult the desk ---- */
+    '<div class="card pad-lg mt" style="margin-top:16px;border-color:var(--brand)">' +
+      '<div class="card-head"><h3>Consult Law</h3>' +
+        '<span class="pill brand">bar 85% · exposure routes to a human</span></div>' +
+      '<p class="muted small mb">Verity is the Pacemaker on an 85% bar. Clause argues how to get to yes; Liability pushes on what could bite. ' +
+      'On anything with real legal exposure the desk holds <i>below</i> the bar on purpose — that hold routes the matter to a <b>licensed attorney</b>. That refusal is the product.</p>' +
+      '<button class="btn primary" id="askBtn">Ask Law: any exposure before these go out?</button>' +
+      '<div id="verdict"></div>' +
+    '</div>' +
+
+    /* ---- add-matter modal ---- */
+    '<div class="modal-back" id="modal">' +
+      '<div class="modal">' +
+        '<span class="mx" id="mClose">×</span>' +
+        '<h3>Add a matter</h3>' +
+        '<p class="muted small mb">Filed to the docket only — Ghost Mode. Nothing is sent, published, or signed.</p>' +
+        '<div class="field"><label>Matter title</label>' +
+          '<input class="input" id="mTitle" placeholder="e.g. Harborview — influencer usage rights"></div>' +
+        '<div class="field"><label>Risk level</label><select class="input" id="mRisk">' +
+          '<option value="High">High — real legal exposure</option>' +
+          '<option value="Medium" selected>Medium — reviewable in-house</option>' +
+          '<option value="Low">Low — routine</option>' +
+        '</select></div>' +
+        '<div class="field"><label>The read</label>' +
+          '<textarea class="input" id="mNote" placeholder="What\'s the legal question? Cite the rule, the clause, or the claim at issue."></textarea></div>' +
+        '<button class="btn primary wide" id="mSave">File to the docket</button>' +
+      '</div>' +
+    '</div>';
+
+  /* ---------------- stats ---------------- */
+  function renderStats() {
+    var m = S.db().matters || [];
+    var open = m.filter(function (x){ return x.state === "Open"; });
+    var high = m.filter(function (x){ return x.risk === "High"; });
+    var attn = m.filter(function (x){ return x.risk === "High" && x.state === "Open"; });
+    document.getElementById("stats").innerHTML =
+      stat("Open matters", open.length, "§", "", "on the docket now") +
+      stat("High risk", high.length, "▲", "", "real exposure flagged", "bad") +
+      stat("Need an attorney", attn.length, "⚖", "", "High + Open — route to human", "warn") +
+      stat("Confidence bar", "85%", "◈", "", "high bar by design", "brand");
+  }
+  function stat(label, val, ic, dir, delta, tone) {
+    var col = tone === "brand" ? "var(--brand-ink)" : (tone ? "var(--"+tone+")" : "var(--text)");
+    return '<div class="card stat"><div class="k-ic" style="color:'+col+'">'+ic+'</div>' +
+      '<div class="k-label">'+label+'</div>' +
+      '<div class="k-val" style="color:'+col+'">'+val+'</div>' +
+      '<div class="k-delta '+(dir||"")+'">'+(dir==="up"?"▲ ":"")+delta+'</div></div>';
+  }
+
+  /* ---------------- matters ---------------- */
+  function renderMatters() {
+    var m = S.db().matters || [];
+    document.getElementById("docket").textContent = m.length + " matter" + (m.length===1?"":"s");
+    var wrap = document.getElementById("matters");
+    if (!m.length) {
+      wrap.innerHTML = '<div class="msg"><div class="mbody muted">The docket is empty. Add a matter above — flag its risk honestly and the desk will hold the line for you.</div></div>';
+      return;
+    }
+    wrap.innerHTML = m.slice().reverse().map(matterCard).join("");
+    m.forEach(function (mt) {
+      if (mt.risk === "High" && mt.state === "Open") {
+        var b = document.getElementById("route-" + mt.id);
+        if (b) b.addEventListener("click", function () { routeToAttorney(mt); });
+      }
+    });
+  }
+  function matterCard(mt) {
+    var r = RISK[mt.risk] || RISK.Medium;
+    var stateCls = mt.state === "Open" ? "warn" : "ok";
+    var needsAttorney = (mt.risk === "High" && mt.state === "Open");
+    return '<div class="card" style="padding:15px;margin-bottom:11px' +
+        (needsAttorney ? ';border-color:rgba(248,113,113,.3)' : '') + '">' +
+      '<div class="flex between" style="align-items:flex-start;gap:12px">' +
+        '<div style="min-width:0"><h3 style="font-size:14px">'+esc(mt.title)+'</h3>' +
+          '<div class="muted small" style="margin-top:2px">'+r.line+'</div></div>' +
+        '<div style="display:flex;gap:6px;flex:0 0 auto">' +
+          '<span class="pill '+r.cls+'"><span class="dot"></span>'+mt.risk+'</span>' +
+          '<span class="pill '+stateCls+'">'+mt.state+'</span>' +
+        '</div>' +
+      '</div>' +
+      '<p class="mbody mt" style="font-size:13px;line-height:1.5;color:var(--text-2)">'+esc(mt.note)+'</p>' +
+      (needsAttorney ?
+        '<div class="flex between mt" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--line-soft)">' +
+          '<span class="small" style="color:var(--bad)">Real legal exposure — not resolved in-house.</span>' +
+          '<button class="btn sm" id="route-'+mt.id+'" style="border-color:rgba(248,113,113,.4);color:var(--bad)">⚖ Route to attorney</button>' +
+        '</div>' : '') +
+    '</div>';
+  }
+
+  function routeToAttorney(mt) {
+    S.stage("general", "Attorney review — " + mt.title, mt.note,
+      "Real legal exposure — a licensed attorney must sign off.", "Law");
+    S.toast("Routed to a licensed attorney — filed to the Approval Desk. Not resolved in-house.", "warn");
+    /* matter stays Open — the desk does NOT close it; a human attorney owns that. */
+    renderMatters();
+  }
+
+  /* ---------------- clause helper ---------------- */
+  var clauseSel = document.getElementById("clauseSel");
+  function renderClause() {
+    var cl = CLAUSES[clauseSel.value];
+    document.getElementById("clauseOut").innerHTML =
+      '<div class="reason" style="align-items:flex-start;padding:13px 14px;border:1px solid var(--line-soft);border-radius:11px;background:var(--ink-2)">' +
+        '<span class="rt data" style="background:rgba(56,189,248,.15);color:var(--c-research)">watch</span>' +
+        '<span style="font-size:13px;line-height:1.55;color:var(--text-2)">'+esc(cl.watch)+'</span>' +
+      '</div>' +
+      '<div class="muted small" style="margin-top:9px;display:flex;align-items:center;gap:6px">' +
+        '<span style="color:var(--warn)">⚠</span> Plain-English guidance, not legal advice — <b style="color:var(--text-2)">confirm with a licensed attorney</b>.</div>';
+  }
+  clauseSel.addEventListener("change", renderClause);
+  renderClause();
+
+  /* ---------------- add-matter modal ---------------- */
+  var modal = document.getElementById("modal");
+  document.getElementById("addBtn").addEventListener("click", function () { modal.classList.add("open"); });
+  document.getElementById("mClose").addEventListener("click", function () { modal.classList.remove("open"); });
+  modal.addEventListener("click", function (e){ if (e.target === modal) modal.classList.remove("open"); });
+
+  document.getElementById("mSave").addEventListener("click", function () {
+    var title = document.getElementById("mTitle").value.trim();
+    var note = document.getElementById("mNote").value.trim();
+    var risk = document.getElementById("mRisk").value;
+    if (!title) { S.toast("Give the matter a title.", "warn"); return; }
+    if (!note)  { S.toast("Add the read — what's the legal question?", "warn"); return; }
+    S.save(function (d) {
+      (d.matters = d.matters || []).push({ id: "mt" + Date.now(), title: title, state: "Open", risk: risk, note: note });
+    });
+    document.getElementById("mTitle").value = "";
+    document.getElementById("mNote").value = "";
+    document.getElementById("mRisk").value = "Medium";
+    modal.classList.remove("open");
+    S.toast(risk === "High" ? "Filed High-risk — flag it to an attorney before it moves."
+                            : "Matter filed to the docket.", risk === "High" ? "warn" : "ok");
+    renderStats(); renderMatters();
+  });
+
+  /* ---------------- consult the desk ---------------- */
+  document.getElementById("askBtn").addEventListener("click", function () {
+    var r = S.consult("law", "Any exposure before these go out?");
+    if (!r) return;
+    var v = r.verdict, pass = r.passed, gate = r.dept.gate, pace = r.dept.pace.name;
+    var out =
+      '<div class="card mt" style="padding:18px;margin-top:16px;border-color:'+(pass?"var(--brand)":"var(--warn)")+'">' +
+        '<div class="flex between" style="align-items:flex-start;gap:12px">' +
+          '<span class="pill '+(pass?"brand":"warn")+'"><span class="dot"></span>' +
+            (pass ? pace+" released ✓" : pace+" HELD — routes to a human attorney") + '</span>' +
+          '<span class="mono small muted">'+v.conf+'% vs '+gate+'% bar</span>' +
+        '</div>' +
+        '<p class="mt" style="font-size:15px;line-height:1.5;font-weight:600">'+esc(v.stance)+'</p>' +
+        '<div class="conf"><div class="cbar"><div class="cfill" style="width:'+v.conf+'%"></div></div>' +
+          '<div class="cmeta"><span>confidence <b>'+v.conf+'%</b></span>' +
+          '<span>release bar <b>'+gate+'%</b> · <b style="color:'+(pass?"var(--ok)":"var(--warn)")+'">'+(pass?"RELEASED":"HELD")+'</b></span></div></div>' +
+        '<div class="reasons">'+ v.reasons.map(function (rr) {
+          return '<div class="reason"><span class="rt '+rr.t+'">'+rr.t+'</span><span>'+esc(rr.s)+'</span></div>';
+        }).join("") +'</div>' +
+        '<div class="reason" style="margin-top:14px;padding:12px 13px;border:1px solid rgba(248,113,113,.3);border-radius:10px;background:rgba(248,113,113,.06);align-items:flex-start">' +
+          '<span class="rt assumption" style="background:rgba(248,113,113,.15);color:var(--bad)">held</span>' +
+          '<span><b>Held for a human attorney — by design.</b> This desk is advisory, not a lawyer. It came in at ' +
+          v.conf + '%, under the ' + gate + '% bar, so it does not clear legal exposure on its own. ' +
+          'Verity routes the matter — with its reasons attached — to a licensed attorney who owns the sign-off. Blank beats confident-wrong.</span>' +
+        '</div>' +
+        '<a class="btn sm mt" href="org.html">See it on the bus →</a>' +
+      '</div>';
+    document.getElementById("verdict").innerHTML = out;
+    S.toast(pass ? (pace + " released it.") : (pace + " held it — routed to a licensed attorney."),
+            pass ? "ok" : "warn");
+  });
+
+  function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  renderStats();
+  renderMatters();
+})();
+</script>
+</body>
+</html>

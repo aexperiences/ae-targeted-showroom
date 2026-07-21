@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campaigns — Targeted Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="showroom.css">
+</head>
+<body>
+<script src="showroom.js"></script>
+<script>
+(function () {
+  var S = Showroom;
+  var c = S.mount({ active: "campaigns.html", crumb: "Campaigns" });
+
+  /* ------------------------------------------------------------ helpers */
+  function pct(num, den) { return den > 0 ? (num / den * 100) : null; }
+  function fmtPct(p) { return p == null ? "—" : p.toFixed(1) + "%"; }
+  function channelPill(ch) {
+    var accent = ch === "Email" ? "prod" : ch === "Paid Social" ? "social" : "sales";
+    return '<span class="pill" style="background:var(--panel-3)"><span class="dot" style="background:var(--c-'+accent+')"></span>'+ch+'</span>';
+  }
+  function statusPill(st) {
+    if (st === "Live") return '<span class="pill ok"><span class="dot"></span>Live</span>';
+    if (st === "Scheduled") return '<span class="pill warn"><span class="dot"></span>Scheduled</span>';
+    return '<span class="pill">Draft</span>';
+  }
+
+  /* ------------------------------------------------------- top-of-page stats */
+  function computeStats() {
+    var d = S.db();
+    var reached = 0, totClicks = 0, totSent = 0, emailOpens = 0, emailSent = 0, conv = 0, spend = 0;
+    d.campaigns.forEach(function (m) {
+      reached += (m.sent || 0);
+      totSent += (m.sent || 0);
+      totClicks += (m.clicks || 0);
+      conv += (m.conv || 0);
+      spend += (m.spend || 0);
+      if (m.channel === "Email") { emailOpens += (m.opens || 0); emailSent += (m.sent || 0); }
+    });
+    return {
+      reached: reached,
+      openRate: pct(emailOpens, emailSent),
+      ctr: pct(totClicks, totSent),
+      conv: conv,
+      spend: spend
+    };
+  }
+
+  function stat(label, val, ic, sub) {
+    return '<div class="card stat"><div class="k-ic">'+ic+'</div>' +
+      '<div class="k-label">'+label+'</div><div class="k-val">'+val+'</div>' +
+      '<div class="k-delta">'+(sub||"")+'</div></div>';
+  }
+
+  /* ----------------------------------------------------------- audience segments */
+  function segments() {
+    var d = S.db();
+    var seen = [], map = {};
+    d.contacts.forEach(function (x) {
+      var k = x.industry || "Other";
+      if (!map[k]) { map[k] = 0; seen.push(k); }
+      map[k]++;
+    });
+    return { list: seen, counts: map, total: d.contacts.length };
+  }
+  function segCount(seg) {
+    if (seg === "__all") return S.db().contacts.length;
+    return S.db().contacts.filter(function (x) { return (x.industry || "Other") === seg; }).length;
+  }
+
+  /* ------------------------------------------------------------------ render */
+  function render() {
+    var st = computeStats();
+    var seg = segments();
+
+    c.innerHTML =
+      '<div class="page-h"><div class="ph-ic">◈</div><div>' +
+        '<h1>Campaigns</h1>' +
+        '<div class="sub">Every blast the shop runs, live. Compose a new one below — but nothing leaves the hub. ' +
+        'Every send routes to <b>founder approval first</b> (Ghost Mode). This is a real composer, not a demo form.</div>' +
+      '</div></div>' +
+
+      '<div class="grid g-4">' +
+        stat("Audience reached", st.reached.toLocaleString(), "◈", "across all sent blasts") +
+        stat("Avg open rate", fmtPct(st.openRate), "✉", "email campaigns") +
+        stat("Avg CTR", fmtPct(st.ctr), "➤", "clicks ÷ delivered") +
+        stat("Conversions", st.conv.toLocaleString(), "✓", "attributed this quarter") +
+      '</div>' +
+
+      '<div class="grid" style="grid-template-columns:1fr;margin-top:16px">' +
+        stat("Ad spend to date", S.money(st.spend), "◇", "media buys · Stripe not wired in the showroom") +
+      '</div>' +
+
+      /* ---- campaign ledger ---- */
+      '<div class="card pad-lg mt" style="margin-top:16px"><div class="card-head"><h3>All campaigns</h3>' +
+        '<span class="pill">rates computed live</span></div>' +
+        '<table class="tbl"><thead><tr><th>Campaign</th><th>Channel</th><th>Status</th>' +
+        '<th class="num">Audience</th><th class="num">Open rate</th><th class="num">CTR</th>' +
+        '<th class="num">Conv.</th><th class="num">Spend</th></tr></thead>' +
+        '<tbody id="crows"></tbody></table></div>' +
+
+      /* ---- composer + org ---- */
+      '<div class="grid g-2 mt" style="margin-top:16px;grid-template-columns:1.15fr .85fr">' +
+
+        '<div class="card pad-lg"><div class="card-head"><h3>New campaign</h3>' +
+          '<span class="pill brand">composer</span></div>' +
+          '<div class="field"><label>Campaign name</label>' +
+            '<input class="input" id="cName" placeholder="e.g. Sunroot — Spring Share Open"></div>' +
+          '<div class="row">' +
+            '<div class="field"><label>Channel</label><select class="input" id="cChan">' +
+              '<option>Email</option><option>Paid Social</option><option>Search</option></select></div>' +
+            '<div class="field"><label>Audience segment</label><select class="input" id="cSeg">' +
+              '<option value="__all">Whole list</option>' +
+              seg.list.map(function (s) { return "<option value=\""+s+"\">"+s+"</option>"; }).join("") +
+            '</select></div>' +
+          '</div>' +
+          '<div class="est-audience mb" id="estBox">' +
+            '<div><div class="ea-lab">Estimated audience</div>' +
+            '<div class="ea-note" id="eaNote">Contacts in this segment</div></div>' +
+            '<div class="ea-big" id="eaBig">0</div></div>' +
+          '<div class="field"><label>Subject line</label>' +
+            '<input class="input" id="cSubj" placeholder="The line that earns the open"></div>' +
+          '<div class="field"><label>Body</label>' +
+            '<textarea class="input" id="cBody" placeholder="Write the message. In the real hub the Production and Social triads review copy before anything releases."></textarea></div>' +
+          '<div class="row" style="margin-top:2px">' +
+            '<button class="btn wide" id="cDraft">Save as draft</button>' +
+            '<button class="btn primary wide" id="cBlast">Send blast</button>' +
+          '</div>' +
+          '<div id="gateNote" class="hide gate-note mt">' +
+            '<span class="pill warn"><span class="dot"></span>Staged — Ghost Mode</span>' +
+            '<span class="small muted" style="margin-left:8px">Held for founder approval. Nothing left the hub.</span>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="card pad-lg"><div class="card-head"><h3>Can we ship the calendar?</h3>' +
+          '<a class="btn sm" href="org.html">Open the bus →</a></div>' +
+          '<p class="muted small mb">Route the campaign calendar past the <b>Production</b> department. The triad argues it, ' +
+          'the Pacemaker gates it on an 80% confidence bar, and it either clears to the COO or escalates to you.</p>' +
+          '<button class="btn primary wide" id="consult">Consult Production (bar 80%)</button>' +
+          '<div id="verdict" class="mt"></div>' +
+        '</div>' +
+
+      '</div>';
+
+    renderRows();
+    renderEst();
+    wire();
+  }
+
+  /* ---------------------------------------------------------------- rows */
+  function renderRows() {
+    var d = S.db();
+    document.getElementById("crows").innerHTML = d.campaigns.map(function (m) {
+      var openR = m.channel === "Email" ? fmtPct(pct(m.opens, m.sent)) : "—";
+      var ctr = fmtPct(pct(m.clicks, m.sent));
+      var staged = m._staged ? ' <span class="pill warn" style="margin-left:6px">staged</span>' : "";
+      return '<tr><td><b>'+m.name+'</b>'+staged+'</td>' +
+        '<td>'+channelPill(m.channel)+'</td>' +
+        '<td>'+statusPill(m.status)+'</td>' +
+        '<td class="num">'+((m.audience||0).toLocaleString())+'</td>' +
+        '<td class="num">'+openR+'</td>' +
+        '<td class="num">'+ctr+'</td>' +
+        '<td class="num">'+(m.conv||0)+'</td>' +
+        '<td class="num">'+(m.spend?S.money(m.spend):"—")+'</td></tr>';
+    }).join("");
+  }
+
+  /* -------------------------------------------------------- estimated audience */
+  function renderEst() {
+    var seg = document.getElementById("cSeg").value;
+    var n = segCount(seg);
+    document.getElementById("eaBig").textContent = n.toLocaleString();
+    document.getElementById("eaNote").textContent = seg === "__all"
+      ? "Everyone on the list" : "Contacts in " + seg;
+  }
+
+  /* ---------------------------------------------------------------- wiring */
+  function wire() {
+    document.getElementById("cSeg").addEventListener("change", renderEst);
+
+    // Save as draft
+    document.getElementById("cDraft").addEventListener("click", function () {
+      var name = document.getElementById("cName").value.trim();
+      var chan = document.getElementById("cChan").value;
+      var seg = document.getElementById("cSeg").value;
+      var aud = segCount(seg);
+      if (!name) { S.toast("Give the campaign a name first.", "warn"); return; }
+      S.save(function (d) {
+        d.campaigns.push({
+          id: "m" + Date.now(), name: name, channel: chan, status: "Draft",
+          audience: aud, sent: 0, opens: 0, clicks: 0, spend: 0, conv: 0,
+          subject: document.getElementById("cSubj").value.trim(),
+          body: document.getElementById("cBody").value.trim()
+        });
+      });
+      S.toast("Draft saved — " + name + " (" + aud.toLocaleString() + " in audience).", "ok");
+      render(); // recompute stats + rows
+    });
+
+    // Send blast — Ghost Mode gate, never actually sends
+    document.getElementById("cBlast").addEventListener("click", function () {
+      var name = document.getElementById("cName").value.trim();
+      if (!name) { S.toast("Name the campaign before staging a blast.", "warn"); return; }
+      S.save(function (d) {
+        var hit = d.campaigns.filter(function (m) { return m.name === name; })[0];
+        if (hit) { hit._staged = true; hit.status = "Scheduled"; }
+      });
+      var box = document.getElementById("gateNote");
+      if (box) box.classList.remove("hide");
+      S.toast("Staged for founder approval — Ghost Mode. Nothing leaves the hub.", "warn");
+      renderRows();
+    });
+
+    // Consult Production
+    document.getElementById("consult").addEventListener("click", function () {
+      var r = S.consult("prod", "Can we deliver the campaign calendar on time?");
+      if (!r) return;
+      var v = r.verdict, pass = r.passed;
+      document.getElementById("verdict").innerHTML =
+        '<div class="card" style="padding:15px;border-color:'+(pass?"var(--brand)":"var(--warn)")+'">' +
+          '<div class="flex between"><span class="pill '+(pass?"brand":"warn")+'">'+
+            (pass ? r.dept.pace.name+" released ✓" : r.dept.pace.name+" held — needs a human")+'</span>' +
+            '<span class="mono small muted">'+v.conf+'% vs '+r.dept.gate+'% bar</span></div>' +
+          '<p class="mt" style="font-size:14px;line-height:1.5">'+v.stance+'</p>' +
+          confBar(v.conf, r.dept.gate) +
+          '<div class="reasons">'+ v.reasons.map(function (rr) {
+            return '<div class="reason"><span class="rt '+rr.t+'">'+rr.t+'</span><span>'+rr.s+'</span></div>';
+          }).join("") +'</div>' +
+          '<a class="btn sm mt" href="org.html">See it on the bus →</a>' +
+        '</div>';
+    });
+  }
+
+  function confBar(conf, gate) {
+    return '<div class="conf"><div class="cbar"><div class="cfill" style="width:'+conf+'%"></div></div>' +
+      '<div class="cmeta"><span>confidence <b>'+conf+'%</b></span><span>release bar <b>'+gate+'%</b></span></div></div>';
+  }
+
+  /* scoped styles for this page's two bespoke bits */
+  var s = document.createElement("style");
+  s.textContent =
+    ".est-audience{display:flex;align-items:center;justify-content:space-between;gap:14px;" +
+      "background:linear-gradient(135deg,var(--brand-glow),var(--ink-2));border:1px solid var(--line);" +
+      "border-radius:12px;padding:14px 16px}" +
+    ".est-audience .ea-lab{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}" +
+    ".est-audience .ea-note{font-size:11.5px;color:var(--text-2);margin-top:3px}" +
+    ".est-audience .ea-big{font-size:30px;font-weight:800;font-family:var(--mono);color:var(--brand-ink);letter-spacing:-1px}" +
+    ".gate-note{display:flex;align-items:center;background:var(--ink-2);border:1px solid var(--line-soft);border-left:3px solid var(--warn);border-radius:10px;padding:10px 13px}";
+  document.head.appendChild(s);
+
+  render();
+})();
+</script>
+</body>
+</html>
