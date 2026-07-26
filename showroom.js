@@ -549,8 +549,9 @@
     var side = document.createElement("aside"); side.className = "sidebar";
     side.appendChild(el(
       '<a href="dashboard.html" class="brand" style="text-decoration:none">' +
-      '<div class="tmark">T</div><div><div class="bt">Targeted Hub</div>' +
-      '<div class="bs">Marketing Agency OS</div></div></a>'
+      '<div class="tmark art"><img src="https://www.aexperiences.com/Targeted_OS.png" alt="" width="38" height="38"></div>' +
+        '<div><div class="bt">Targeted OS</div>' +
+      '<div class="bs">Marketing Agency OS &middot; V2.0</div></div></a>'
     ));
     var nav = document.createElement("nav"); nav.className = "nav";
     var rank = tierRank();
@@ -569,6 +570,19 @@
       });
     });
     side.appendChild(nav);
+
+    /* --- the way out ------------------------------------------------
+       Every showroom needs a door that is not the browser back button.
+       This one lands the visitor in the STORE, on this product's own
+       pricing sheet, never on the marketing homepage. */
+    side.appendChild(el(
+      '<div class="sideout">' +
+        '<a class="so-main" href="https://www.aexperiences.com/hubs/targeted.html">' +
+          '<span><span class="so-k">Targeted OS</span>' +
+          '<span class="so-t">See pricing &amp; packages</span></span>' +
+          '<span class="so-a">&rarr;</span></a>' +
+        '<a class="so-sub" href="https://www.aexperiences.com/shop.html">All Accelerated Experiences products &rarr;</a>' +
+      '</div>'));
     return side;
   }
   function tierByRank(r){ for (var k in TIERS) if (TIERS[k].rank===r) return k; return "multi"; }
@@ -577,7 +591,7 @@
     var t = TIERS[tier()];
     var bar = document.createElement("div"); bar.className = "topbar";
     bar.innerHTML =
-      '<div class="crumbs">Targeted Hub · <b>'+crumb+'</b></div>' +
+      '<div class="crumbs">Targeted OS · <b>'+crumb+'</b></div>' +
       '<div class="spacer"></div>' +
       '<div class="tierpill" id="tierPill"><span class="dot"></span><div><b>'+t.name+'</b> ' +
         '<span class="price">'+t.price+'</span></div><span class="chev">▾</span></div>' +
@@ -608,11 +622,11 @@
 
   function ribbon() {
     return el('<div class="ribbon"><span class="live">LIVE SHOWROOM</span>' +
-      ' — this is the real hub. Everything you type stays in your browser and resets when you leave. ' +
+      ' — this is the real OS. Everything you type stays in your browser and resets when you leave. ' +
       '<a href="javascript:void(0)" id="resetFloor">Reset the floor</a></div>');
   }
   function footer() {
-    return el('<div class="ae-credit">Powered by <b style="color:var(--text-2);margin:0 2px">Accelerated Experiences, LLC</b> · Targeted Hub is a white-label build.</div>');
+    return el('<div class="ae-credit">Powered by <b style="color:var(--text-2);margin:0 2px">Accelerated Experiences, LLC</b> · Targeted OS is a white-label build.</div>');
   }
 
   /* mount: called by every page */
