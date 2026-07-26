@@ -325,3 +325,15 @@ textarea.input{resize:vertical;min-height:80px}
 .mt{margin-top:14px}.mb{margin-bottom:14px}
 .flex{display:flex;gap:10px;align-items:center}
 .between{justify-content:space-between}
+
+/* — the product mark & the way out ————————————————————————————
+   The real Targeted OS icon from the AE icon set, not a drawn letter.
+   Served from the .com so one file updates every property.
+   The exit lands the visitor in the STORE — on this product's own
+   pricing sheet — never on the marketing homepage. */
+.gate-mark.art{ background:none; box-shadow:none; overflow:hidden; padding:0; }
+.gate-mark.art img{ width:100%; height:100%; object-fit:contain; display:block; }
+.gate-out{ margin-top:14px; display:flex; flex-direction:column; gap:7px; text-align:center; }
+.gate-out a{ font-size:12.5px; color:rgba(255,255,255,.62); text-decoration:none; letter-spacing:.01em; }
+.gate-out a:first-child{ font-size:13.5px; color:rgba(255,255,255,.86); font-weight:600; }
+.gate-out a:hover{ color:#fff; text-decoration:underline; }
