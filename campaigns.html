@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Campaigns — Targeted Hub</title>
+<title>Campaigns — Targeted OS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="showroom.css">
@@ -79,7 +79,7 @@
     c.innerHTML =
       '<div class="page-h"><div class="ph-ic">◈</div><div>' +
         '<h1>Campaigns</h1>' +
-        '<div class="sub">Every blast the shop runs, live. Compose a new one below — but nothing leaves the hub. ' +
+        '<div class="sub">Every blast the shop runs, live. Compose a new one below — but nothing leaves the OS. ' +
         'Every send routes to <b>founder approval first</b> (Ghost Mode). This is a real composer, not a demo form.</div>' +
       '</div></div>' +
 
@@ -124,14 +124,14 @@
           '<div class="field"><label>Subject line</label>' +
             '<input class="input" id="cSubj" placeholder="The line that earns the open"></div>' +
           '<div class="field"><label>Body</label>' +
-            '<textarea class="input" id="cBody" placeholder="Write the message. In the real hub the Production and Social triads review copy before anything releases."></textarea></div>' +
+            '<textarea class="input" id="cBody" placeholder="Write the message. In the real OS the Production and Social triads review copy before anything releases."></textarea></div>' +
           '<div class="row" style="margin-top:2px">' +
             '<button class="btn wide" id="cDraft">Save as draft</button>' +
             '<button class="btn primary wide" id="cBlast">Send blast</button>' +
           '</div>' +
           '<div id="gateNote" class="hide gate-note mt">' +
             '<span class="pill warn"><span class="dot"></span>Staged — Ghost Mode</span>' +
-            '<span class="small muted" style="margin-left:8px">Held for founder approval. Nothing left the hub.</span>' +
+            '<span class="small muted" style="margin-left:8px">Held for founder approval. Nothing left the OS.</span>' +
           '</div>' +
         '</div>' +
 
@@ -210,7 +210,7 @@
       });
       var box = document.getElementById("gateNote");
       if (box) box.classList.remove("hide");
-      S.toast("Staged for founder approval — Ghost Mode. Nothing leaves the hub.", "warn");
+      S.toast("Staged for founder approval — Ghost Mode. Nothing leaves the OS.", "warn");
       renderRows();
     });
 
