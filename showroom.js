@@ -132,7 +132,7 @@
      Showroom shows the FULL Multi-team hub; lowering the tier SUBTRACTS departments. */
   var DEPTS = [
     { group: "Command",     items: [
-      { href: "dashboard.html", label: "Command Center", ic: "◎", minRank: 1 },
+      { href: "dashboard.html", label: "Command Center", ic: "◎", minRank: 1 }, { href: "calendar.html", label: "Calendar", ic: "▤", minRank: 1 },
       { href: "approvals.html", label: "Approval Desk", ic: "✓", minRank: 1, accent: "ops" }
     ]},
     { group: "New Business", items: [
