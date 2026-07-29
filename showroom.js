@@ -123,7 +123,7 @@
 
   /* ---------------------------------------------------- tiers (subtract-down) */
   var TIERS = {
-    multi:     { key: "multi",     name: "Multi-team",        price: "$2,200/mo · $16k build", rank: 3 },
+    multi:     { key: "multi",     name: "Multi-team",        price: "$2,200/mo · $12.2k build", rank: 3 },
     agency:    { key: "agency",    name: "Agency",            price: "$950/mo · $6.5k build",  rank: 2 },
     freelance: { key: "freelance", name: "Freelance / Studio", price: "$450/mo · $2.5k build", rank: 1 }
   };

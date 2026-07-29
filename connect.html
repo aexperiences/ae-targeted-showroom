@@ -100,8 +100,10 @@
   function api(payload){ return fetch(API,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(Object.assign({ns:NS},payload))}).then(function(r){return r.json();}).catch(function(){return {ok:false,reason:"offline"};}); }
   var KV_OK=null;
 
-  c.appendChild(T.page("Connect",
-    "Message anyone, post to a channel, or get face to face on native video — one to one, the whole team, or an outside guest from a plain browser link. No Zoom, no accounts; the video is the browser's own."));
+  var _ph=document.createElement("div"); _ph.className="page-h";
+  _ph.innerHTML='<div class="ph-ic">◉</div><div><h1>Connect</h1>'+
+    '<div class="sub">Message anyone, post to a channel, or get face to face on native video — one to one, the whole team, or an outside guest from a plain browser link. No Zoom, no accounts; the video is the browser\'s own.</div></div>';
+  c.appendChild(_ph);
 
   var host=document.createElement("div"); c.appendChild(host);
   host.innerHTML=
