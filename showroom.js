@@ -1,6 +1,6 @@
 /* ============================================================================
    TARGETED HUB — SHOWROOM ENGINE
-   Marketing Agency OS · Powered by Accelerated Experiences LLC
+   Marketing Agency OS · AETRIAD Powered · Accelerated Experiences LLC
 
    BROWSER-ONLY SHOWROOM. No backend, no network. Everything lives in this
    browser tab's sessionStorage and resets when the visitor leaves or idles.
