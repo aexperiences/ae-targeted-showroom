@@ -33,16 +33,16 @@
   var queued = d.social.filter(function(x){return x.state!=="Posted";}).length;
 
   c.innerHTML =
-    '<div class="page-h"><div class="ph-ic">◎</div><div>' +
+    '<div class="page-h"><div class="ph-ic"><img src="icons/command-center.svg" alt=""></div><div>' +
       '<h1>Good to see you, Maya.</h1>' +
       '<div class="sub">Here\'s the whole agency at a glance — everything below is live and clickable.</div>' +
     '</div></div>' +
 
     '<div class="grid g-4">' +
-      stat("Open pipeline", S.money(pipeVal), "◆", "up", "3 deals late-stage") +
-      stat("Won this quarter", S.money(won), "✓", "up", "Pike Street signed") +
-      stat("Live campaigns", live, "◈", "", "2 more scheduled") +
-      stat("Posts queued", queued, "❋", "", "awaiting approval") +
+      stat("Open pipeline", S.money(pipeVal), '<img src="icons/pipeline.svg" alt="">', "up", "3 deals late-stage") +
+      stat("Won this quarter", S.money(won), '<img src="icons/approvals.svg" alt="">', "up", "Pike Street signed") +
+      stat("Live campaigns", live, '<img src="icons/campaigns.svg" alt="">', "", "2 more scheduled") +
+      stat("Posts queued", queued, '<img src="icons/social.svg" alt="">', "", "awaiting approval") +
     '</div>' +
 
     '<div class="grid g-2 mt" style="margin-top:16px;grid-template-columns:1.3fr .9fr">' +
@@ -61,9 +61,9 @@
     '</div>' +
 
     '<div class="grid g-3 mt" style="margin-top:16px">' +
-      quick("Estimating Machine", "Price a job at your real margin.", "estimator.html", "∑") +
-      quick("Campaigns", live+" live · full blast composer.", "campaigns.html", "◈") +
-      quick("Books & Margins", "Quoted vs collected, live P&L.", "books.html", "▤") +
+      quick("Estimating Machine", "Price a job at your real margin.", "estimator.html", '<img src="icons/estimator.svg" alt="">') +
+      quick("Campaigns", live+" live · full blast composer.", "campaigns.html", '<img src="icons/campaigns.svg" alt="">') +
+      quick("Books & Margins", "Quoted vs collected, live P&L.", "books.html", '<img src="icons/books.svg" alt="">') +
     '</div>';
 
   // pipeline mini-table
@@ -106,7 +106,7 @@
   }
   function quick(t, s, href, ic) {
     return '<a href="'+href+'" class="card" style="display:block"><div class="flex" style="gap:12px">' +
-      '<div class="ph-ic" style="width:40px;height:40px;font-size:19px">'+ic+'</div>' +
+      '<div class="ph-ic" style="width:40px;height:40px;font-size:19px;flex:0 0 40px">'+ic+'</div>' +
       '<div><h3 style="font-size:14px">'+t+'</h3><div class="muted small mt" style="margin-top:3px">'+s+'</div></div>' +
       '</div></a>';
   }

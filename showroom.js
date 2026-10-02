@@ -132,35 +132,35 @@
      Showroom shows the FULL Multi-team hub; lowering the tier SUBTRACTS departments. */
   var DEPTS = [
     { group: "Command",     items: [
-      { href: "dashboard.html", label: "Command Center", ic: "◎", minRank: 1 }, { href: "calendar.html", label: "Calendar", ic: "▤", minRank: 1 }, { href:"contacts.html", label:"Contacts", ic:"☎" }, { href:"connect.html", label:"Connect · Video", ic:"◉" }, { href:"records.html", label:"Records · Filing", ic:"▤" },
-      { href: "approvals.html", label: "Approval Desk", ic: "✓", minRank: 1, accent: "ops" }
+      { href: "dashboard.html", label: "Command Center", ic: "icons/command-center.svg", minRank: 1 }, { href: "calendar.html", label: "Calendar", ic: "icons/calendar.svg", minRank: 1 }, { href:"contacts.html", label:"Contacts", ic:"icons/contacts.svg" }, { href:"connect.html", label:"Connect · Video", ic:"icons/connect.svg" }, { href:"records.html", label:"Records · Filing", ic:"icons/records.svg" },
+      { href: "approvals.html", label: "Approval Desk", ic: "icons/approvals.svg", minRank: 1, accent: "ops" }
     ]},
     { group: "New Business", items: [
-      { href: "pipeline.html",  label: "CRM · Pipeline",  ic: "◆", minRank: 1, accent: "sales" },
-      { href: "estimator.html", label: "Estimating Machine", ic: "∑", minRank: 1, accent: "money" }
+      { href: "pipeline.html",  label: "CRM · Pipeline",  ic: "icons/pipeline.svg", minRank: 1, accent: "sales" },
+      { href: "estimator.html", label: "Estimating Machine", ic: "icons/estimator.svg", minRank: 1, accent: "money" }
     ]},
     { group: "Growth", items: [
-      { href: "campaigns.html", label: "Campaigns",       ic: "◈", minRank: 1, accent: "prod" },
-      { href: "social.html",    label: "Social Media",    ic: "❋", minRank: 2, accent: "social" },
-      { href: "research.html",  label: "Market Research", ic: "◭", minRank: 3, accent: "research" }
+      { href: "campaigns.html", label: "Campaigns",       ic: "icons/campaigns.svg", minRank: 1, accent: "prod" },
+      { href: "social.html",    label: "Social Media",    ic: "icons/social.svg", minRank: 2, accent: "social" },
+      { href: "research.html",  label: "Market Research", ic: "icons/research.svg", minRank: 3, accent: "research" }
     ]},
     { group: "Craft", items: [
-      { href: "studio.html",    label: "Creative Studio", ic: "✦", minRank: 1, accent: "creative" },
-      { href: "webbuilder.html",label: "Website Builder", ic: "▥", minRank: 1, accent: "creative" }
+      { href: "studio.html",    label: "Creative Studio", ic: "icons/studio.svg", minRank: 1, accent: "creative" },
+      { href: "webbuilder.html",label: "Website Builder", ic: "icons/webbuilder.svg", minRank: 1, accent: "creative" }
     ]},
     { group: "Money", items: [
-      { href: "books.html",     label: "Books & Margins", ic: "▤", minRank: 2, accent: "money" }
+      { href: "books.html",     label: "Books & Margins", ic: "icons/books.svg", minRank: 2, accent: "money" }
     ]},
     { group: "People", items: [
-      { href: "hr.html",        label: "HR · People Ops", ic: "☷", minRank: 2, accent: "ops" },
-      { href: "operations.html",label: "Operations",      ic: "⛭", minRank: 3, accent: "ops" }
+      { href: "hr.html",        label: "HR · People Ops", ic: "icons/hr.svg", minRank: 2, accent: "ops" },
+      { href: "operations.html",label: "Operations",      ic: "icons/operations.svg", minRank: 3, accent: "ops" }
     ]},
     { group: "Governance", items: [
-      { href: "law.html",       label: "Law · Business",  ic: "§", minRank: 3, accent: "research" },
-      { href: "it.html",        label: "IT · Health",     ic: "♥", minRank: 2, accent: "prod" }
+      { href: "law.html",       label: "Law · Business",  ic: "icons/law.svg", minRank: 3, accent: "research" },
+      { href: "it.html",        label: "IT · Health",     ic: "icons/it.svg", minRank: 2, accent: "prod" }
     ]},
     { group: "The Org", items: [
-      { href: "org.html",       label: "Agent Org · Bus", ic: "⇋", minRank: 2, accent: "ops" }
+      { href: "org.html",       label: "Agent Org · Bus", ic: "icons/org.svg", minRank: 2, accent: "ops" }
     ]}
   ];
 
@@ -563,7 +563,7 @@
         var locked = it.minRank > rank;
         var a = el('<a href="'+ (locked ? "javascript:void(0)" : it.href) +'" class="'+
           (it.href===active?"active":"")+(locked?" locked":"")+'">'+
-          '<span class="ic">'+it.ic+'</span>'+it.label+
+          '<img class="ic" src="'+it.ic+'" alt="" width="30" height="30">'+it.label+
           (locked ? '<span class="tier-tag">'+TIERS[tierByRank(it.minRank)].name+'</span>' : '')+'</a>');
         if (locked) a.title = "Available in the "+TIERS[tierByRank(it.minRank)].name+" tier";
         nav.appendChild(a);
@@ -626,7 +626,7 @@
       '<a href="javascript:void(0)" id="resetFloor">Reset the floor</a></div>');
   }
   function footer() {
-    return el('<div class="ae-credit"><a href="https://www.aexperiences.com/" class="ae-triad" aria-label="AETRIAD Powered - Accelerated Experiences LLC"><img src="/marks/aetriad-powered.png" alt="AETRIAD Powered" style="height:30px;width:auto;vertical-align:middle"></a><br>Targeted OS is a white-label build.</div>');
+    return el('<div class="ae-credit"><a href="https://www.aexperiences.com/" class="ae-triad" aria-label="AETRIAD Powered - Accelerated Experiences LLC"><img src="/marks/aos-aetriad-powered.png" alt="AOS - AETRIAD Powered" style="height:64px;width:auto;vertical-align:middle"></a><br>Targeted OS is a white-label build.</div>');
   }
 
   /* mount: called by every page */
@@ -740,7 +740,7 @@
       :{surface:'var(--card,#fff)',surf2:'var(--sunk,#efe9df)',text:'var(--ink,#1a1a1a)',mut:'var(--mut,#888)',line:'var(--line,#ddd)',prim:'var(--mag,#c8501e)',onprim:'#fff',good:'var(--good,#4a8a5a)',warn:'var(--watch,#d19a2b)'};
     var st=document.createElement('style'); st.id='aeCooStyle';
     st.textContent=
-      '#aeCooFab{position:fixed;right:18px;bottom:18px;z-index:95;width:54px;height:54px;border-radius:50%;border:none;cursor:pointer;background:'+v.prim+';color:'+v.onprim+';box-shadow:0 12px 30px -8px rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;transition:transform .15s}'+
+      '#aeCooFab{position:fixed;right:18px;bottom:18px;z-index:95;width:62px;height:62px;border-radius:50%;border:none;cursor:pointer;background:none;padding:0;overflow:hidden;color:'+v.onprim+';box-shadow:0 12px 30px -8px rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;transition:transform .15s}'+
       '#aeCooFab:hover{transform:translateY(-2px)}'+
       '#aeCooFab .lbl{position:absolute;right:62px;white-space:nowrap;background:'+v.surface+';color:'+v.text+';border:1px solid '+v.line+';border-radius:999px;padding:5px 11px;font-size:11.5px;font-weight:700;box-shadow:0 8px 22px -12px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .15s}'+
       '#aeCooFab:hover .lbl{opacity:1}'+
@@ -792,7 +792,7 @@
     }
 
     var fab=document.createElement('button'); fab.id='aeCooFab'; fab.setAttribute('aria-label','Ask '+coo.name);
-    fab.innerHTML='<span class="lbl">Ask '+esc(coo.name)+'</span>◎';
+    fab.innerHTML='<span class="lbl">Ask '+esc(coo.name)+'</span><img src="icons/ivy.svg" alt="" style="width:62px;height:62px;border-radius:50%;display:block">';
     document.body.appendChild(fab);
 
     var samples=['What’s the agent org?','How much does it cost?','Can I customize it?','What needs my attention?'];

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+<defs>
+<linearGradient id="gwb" x1="0" y1="0" x2="0.65" y2="1"><stop offset="0%" stop-color="#a9c6d9"/><stop offset="55%" stop-color="#4a7591"/><stop offset="100%" stop-color="#172c3a"/></linearGradient>
+<radialGradient id="glwb" cx="32%" cy="6%" r="80%"><stop offset="0%" stop-color="#ffffff" stop-opacity=".26"/><stop offset="100%" stop-color="#ffffff" stop-opacity="0"/></radialGradient>
+</defs>
+<rect x="0" y="0" width="1024" height="1024" fill="url(#gwb)"/>
+<g id="art" transform="translate(7.84,20.89) scale(1.9694)">
+<g id="sunburst"><circle cx="250" cy="250" r="142" fill="#fff" opacity=".11"/><g stroke="#e0a83a" stroke-width="9" stroke-linecap="round" opacity="0.68">
+<line x1="250" y1="104" x2="250" y2="56"/><line x1="173" y1="116.6" x2="159" y2="92.4"/><line x1="123.6" y1="177" x2="82" y2="153"/><line x1="96" y1="250" x2="68" y2="250"/><line x1="123.6" y1="323" x2="82" y2="347"/><line x1="173" y1="383.4" x2="159" y2="407.6"/><line x1="250" y1="396" x2="250" y2="444"/><line x1="327" y1="383.4" x2="341" y2="407.6"/><line x1="376.4" y1="323" x2="418" y2="347"/><line x1="404" y1="250" x2="432" y2="250"/><line x1="376.4" y1="177" x2="418" y2="153"/><line x1="327" y1="116.6" x2="341" y2="92.4"/></g></g>
+
+<rect x="60" y="398" width="380" height="14" rx="7" fill="#1f1510" opacity=".35"/>
+<!-- tower crane -->
+<g stroke="#e2673f" stroke-width="16" stroke-linecap="round" fill="none">
+<line x1="392" y1="400" x2="392" y2="84"/><line x1="392" y1="84" x2="176" y2="84"/><line x1="392" y1="140" x2="330" y2="84"/><line x1="392" y1="84" x2="440" y2="84"/>
+</g>
+<rect x="378" y="110" width="28" height="22" rx="5" fill="#2a1810"/>
+<line x1="206" y1="84" x2="206" y2="150" stroke="#2a1810" stroke-width="6"/>
+<rect x="176" y="150" width="60" height="28" rx="6" fill="#c8794f"/>
+<!-- building: finished lower floors, open steel on top -->
+<rect x="156" y="236" width="196" height="164" fill="#f4eede"/>
+<rect x="156" y="236" width="196" height="30" fill="#1c3d22"/>
+<circle cx="174" cy="251" r="6" fill="#e2673f"/><circle cx="194" cy="251" r="6" fill="#e0a83a"/><circle cx="214" cy="251" r="6" fill="#6cc27a"/>
+<g fill="#8fb6c9"><rect x="176" y="288" width="40" height="34" rx="4"/><rect x="234" y="288" width="40" height="34" rx="4"/><rect x="292" y="288" width="40" height="34" rx="4"/>
+<rect x="176" y="346" width="40" height="34" rx="4"/><rect x="234" y="346" width="40" height="34" rx="4"/></g>
+<rect x="292" y="346" width="40" height="54" rx="4" fill="#1c3d22"/>
+<g stroke="#9c6d12" stroke-width="12" stroke-linecap="round"><line x1="166" y1="236" x2="166" y2="190"/><line x1="254" y1="236" x2="254" y2="190"/><line x1="342" y1="236" x2="342" y2="190"/><line x1="160" y1="192" x2="348" y2="192"/></g>
+<!-- worker -->
+<g transform="translate(96,300)">
+<path d="M-34 100 C-34 52 -16 36 0 36 C16 36 34 52 34 100 Z" fill="#e2673f"/>
+<circle cx="0" cy="8" r="26" fill="#e8b06a"/>
+<path d="M-28 2 A28 28 0 0 1 28 2 Z" fill="#e0a83a"/>
+<rect x="-34" y="0" width="68" height="10" rx="5" fill="#dda12e"/>
+<circle cx="-9" cy="14" r="3" fill="#2a1810"/><circle cx="9" cy="14" r="3" fill="#2a1810"/>
+</g>
+</g>
+<rect x="0" y="0" width="1024" height="1024" fill="url(#glwb)"/>
+</svg>
