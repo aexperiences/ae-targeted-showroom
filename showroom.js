@@ -626,7 +626,7 @@
       '<a href="javascript:void(0)" id="resetFloor">Reset the floor</a></div>');
   }
   function footer() {
-    return el('<div class="ae-credit"><a href="https://www.aexperiences.com/" class="ae-triad" aria-label="AETRIAD Powered - Accelerated Experiences LLC"><img src="/marks/aos-aetriad-powered.png" alt="AOS - AETRIAD Powered" style="height:64px;width:auto;vertical-align:middle"></a><br>Targeted OS is a white-label build.</div>');
+    return el('<div class="ae-credit"><a href="https://www.aexperiences.com/" class="ae-triad" aria-label="AETRIAD Powered - Accelerated Experiences LLC"><img src="marks/aos-aetriad-powered.png" alt="AOS - AETRIAD Powered" style="height:64px;width:auto;vertical-align:middle"></a><br>Targeted OS is a white-label build.</div>');
   }
 
   /* mount: called by every page */
