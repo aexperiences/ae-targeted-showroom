@@ -551,7 +551,7 @@
       '<a href="dashboard.html" class="brand" style="text-decoration:none">' +
       '<div class="tmark art"><img src="https://www.aexperiences.com/Targeted_OS.png" alt="" width="38" height="38"></div>' +
         '<div><div class="bt">Targeted OS</div>' +
-      '<div class="bs">Marketing Agency OS &middot; V2.0</div></div></a>'
+      '<div class="bs">Marketing Agency OS &middot; V4.0</div></div></a>'
     ));
     var nav = document.createElement("nav"); nav.className = "nav";
     var rank = tierRank();
