@@ -40,6 +40,9 @@
 <script>
 (function () {
   var T = window.Showroom;
+  /* this engine exports no esc()/page(); the shared Contacts page expects them */
+  if(!T.esc) T.esc=function(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m];}); };
+  if(!T.page) T.page=function(t,s){ return T.el('<div class="page-h"><div class="ph-ic"><img src="icons/contacts.svg" alt=""></div><div><h1>'+T.esc(t)+'</h1><div class="sub">'+T.esc(s)+'</div></div></div>'); };
   var c = T.mount({ active:"contacts.html", crumb:"Contacts" });
   var KEY="targeted_contacts_v1";
   var SEED=(window.TARGETED_CONTACTS||[]).slice();

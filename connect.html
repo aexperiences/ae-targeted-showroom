@@ -76,15 +76,18 @@
 <script>
 (function () {
   var T=window.Showroom;
+  /* this engine exports no esc()/page(); the shared Records and Connect pages expect them */
+  if(!T.esc) T.esc=function(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m];}); };
+  if(!T.page) T.page=function(t,s){ return T.el('<div class="page-h"><div class="ph-ic"><img src="icons/connect.svg" alt=""></div><div><h1>'+T.esc(t)+'</h1><div class="sub">'+T.esc(s)+'</div></div></div>'); };
   var c=T.mount({active:"connect.html",crumb:"Connect"});
   var API=window.TARGETED_API+'/api/connect'; var NS='targeted';
-  var TEAM=[
-    {slug:"maya-alvarez",name:"Maya Alvarez",role:"Managing Partner",init:"MA"},
-    {slug:"chris-boone",name:"Chris Boone",role:"Account Director",init:"CB"},
-    {slug:"lila-nguyen",name:"Lila Nguyen",role:"Creative Director",init:"LN"},
-    {slug:"sam-ortiz",name:"Sam Ortiz",role:"Strategist",init:"SO"},
-    {slug:"gio-ferrari",name:"Gio Ferrari",role:"Producer",init:"GF"}
-  ];
+  /* The team — read from this system's own seeded people, never typed in here. */
+  var TEAM=(function(){ var D={}; try{ D=T.db()||{}; }catch(e){} var out=[], seen={};
+    function add(n,r){ n=String(n||"").trim(); if(!n||seen[n]) return; seen[n]=1;
+      var w=n.replace(/^Coach\s+/,"").replace(/,.*$/,"").split(/\s+/);
+      out.push({slug:n.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""),name:n,role:String(r||""),init:(((w[0]||"")[0]||"")+(w.length>1?w[w.length-1][0]:((w[0]||"")[1]||""))).toUpperCase()}); }
+    try{ (D.team||[]).forEach(function(t){ if(t.type==="Human") add(t.name,t.role); }); }catch(e){}
+    return out; })();
   var CHANNELS=[
     {ch:"agency",name:"# agency",desc:"The whole shop"},
     {ch:"clients",name:"# clients",desc:"Account chatter"},

@@ -43,8 +43,11 @@
 <script>
 (function () {
   var T=window.Showroom;
+  /* this engine exports no esc()/page(); the shared Records and Connect pages expect them */
+  if(!T.esc) T.esc=function(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m];}); };
+  if(!T.page) T.page=function(t,s){ return T.el('<div class="page-h"><div class="ph-ic"><img src="icons/records.svg" alt=""></div><div><h1>'+T.esc(t)+'</h1><div class="sub">'+T.esc(s)+'</div></div></div>'); };
   var c=T.mount({active:"records.html",crumb:"Records"});
-  var KEY="targeted_records_v1";
+  var KEY="targeted_records_v2";
 
   /* The filing plan — one cabinet per real thing the firm keeps. */
   var CABINETS=[
@@ -58,14 +61,17 @@
     {k:"firm",ic:"🏢",name:"The agency",desc:"Formation, insurance, policies."}
   ];
 
-  /* Seeded records — real McArthur artifacts where they exist, honestly labeled. */
-  var SEED=[
-    {cab:"clients",name:"Anchor client — MSA & SOW",kind:"pdf",tag:"sot",who:"Maya Alvarez",when:"2026-02-20",note:"Governs scope and billing."},
-    {cab:"rights",name:"Stock & music licenses — 2026",kind:"xls",tag:"sot",who:"Gio Ferrari",when:"2026-01-30",note:"Proof we may use what we shipped."},
-    {cab:"campaigns",name:"Q3 campaign brief",kind:"doc",tag:"wip",who:"Sam Ortiz",when:"2026-07-21",note:""},
-    {cab:"creative",name:"Brand kit — anchor client",kind:"img",tag:"sot",who:"Lila Nguyen",when:"2026-05-04",note:""},
-    {cab:"money",name:"Invoices — 2026",kind:"xls",tag:"sot",who:"Maya Alvarez",when:"2026-07-27",note:""}
-  ];
+  /* Seeded records — built from this system's own book (its people, jobs and paperwork), never typed in. */
+  var SEED=(function(){ var D={}; try{ D=T.db()||{}; }catch(e){} var out=[], today=((T.TODAY instanceof Date)?T.TODAY:new Date()).toISOString().slice(0,10);
+    function add(cab,name,kind,tag,who,when,note){ if(name) out.push({cab:cab,name:String(name),kind:kind||"pdf",tag:tag||"",who:who||"",when:when||"",note:note||""}); }
+    function exp(d){ return !d||!/^\d{4}-/.test(d)?"":(d<today?"EXPIRED":"Expires "+d); }
+    try{ var H=(D.team||[]).filter(function(t){return t.type==="Human";}), SD=(H.filter(function(t){return /sales/i.test(t.role);})[0]||H[0]||{}).name||"";
+      (D.contacts||[]).forEach(function(c){ add(/proposal|pitch|demo/i.test(c.stage)?"proposals":"clients",(/won|client|retain|active/i.test(c.stage)?"Agreement — ":"Proposal — ")+c.name,"pdf",/won|client|retain|active/i.test(c.stage)?"sot":"wip",SD,"",c.stage+(c.note?" · "+c.note:"")); });
+      (D.campaigns||[]).forEach(function(c){ add("campaigns","Campaign report — "+c.name+" ("+c.channel+")","doc","sot",SD,"",c.status); });
+      (D.assets||[]).forEach(function(a){ add("creative",a.kind+" — "+a.client,"img",/final|approved|done/i.test(a.state)?"sot":"wip",a.by,"",a.state); });
+      (D.quotes||[]).forEach(function(q){ add("money","Estimate — "+q.client+" · "+q.scope,"xls","sot",SD,"",""); });
+      H.forEach(function(t){ add("people","Agreement — "+t.name+" ("+t.role+")","pdf",/pending/i.test(t.paper)?"wip":"sot",SD,"",t.paper||""); }); }catch(e){}
+    return out; })();
 
   function load(){ try{ var d=JSON.parse(sessionStorage.getItem(KEY)); if(d&&d.length) return d; }catch(e){} return SEED.slice(); }
   function persist(){ try{ sessionStorage.setItem(KEY,JSON.stringify(FILES)); }catch(e){} }
