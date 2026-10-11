@@ -1002,7 +1002,7 @@
       '</div>':(g3?'<div style="border:1px solid '+TRK+';border-radius:12px;padding:14px 16px"><div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:'+MUT+';margin-bottom:8px">Health vs. target band</div><svg viewBox="0 0 560 116" style="width:100%;height:auto">'+g3+'</svg></div>':''));
 
     var first=content.querySelector('.card');
-    if(first&&first.nextSibling) content.insertBefore(card,first.nextSibling);
+    if(first&&first.parentNode) first.parentNode.insertBefore(card,first.nextSibling);
     else content.appendChild(card);
   }
   function boot(){ build(); setTimeout(build,300); setTimeout(build,1200); }
@@ -1234,3 +1234,24 @@
   else boot();
 
 })(window);
+
+/* BIRDSEYE:BEGIN — added by machines/birdseye/convert.py. Wraps Showroom.mount() so every page gets the
+   Birdseye shell (header, floor plan, dock, More sheet, helper tab). Legacy functions are untouched.
+   To undo: `python3 convert.py undo <repo>` (or delete from BEGIN to END). */
+(function () {
+  var G = window["Showroom"]; if (!G || typeof G.mount !== 'function' || G.__birdseye) return; G.__birdseye = true;
+  var me = document.currentScript, base = me && me.src ? me.src.replace(/[^\/]*(\?.*)?$/, '') : '';
+  var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = base + 'birdseye/birdseye.css'; document.head.appendChild(l);
+  var ready = false, queue = [];
+  function load(src, cb) { var s = document.createElement('script'); s.src = src; s.onload = cb; s.onerror = cb; document.head.appendChild(s); }
+  load(base + 'birdseye/birdseye-shell.js', function () { load(base + 'birdseye.config.js', function () { ready = true; queue.splice(0).forEach(function (f) { f(); }); }); });
+  var legacyMount = G.mount;
+  G.mount = function (o) {
+    document.documentElement.classList.add('bs-on', 'bs-pending');
+    var c = legacyMount.apply(this, arguments);
+    function go() { try { if (window.BirdseyeShell && window.BIRDSEYE) window.BirdseyeShell.adopt({ config: window.BIRDSEYE, active: o && o.active, content: c }); } catch (e) { if (window.console) console.error('[birdseye]', e); } document.documentElement.classList.remove('bs-pending'); }
+    if (ready) go(); else queue.push(go);
+    return c;
+  };
+})();
+/* BIRDSEYE:END */
