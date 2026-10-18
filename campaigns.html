@@ -79,7 +79,7 @@
     c.innerHTML =
       '<div class="page-h"><div class="ph-ic"><img src="icons/campaigns.svg" alt=""></div><div>' +
         '<h1>Campaigns</h1>' +
-        '<div class="sub">Every blast the shop runs, live. Compose a new one below — but nothing leaves the OS. ' +
+        '<div class="sub">Every campaign the shop runs, live, with the marks of every department on it. Compose a new one below — but nothing leaves the OS. ' +
         'Every send routes to <b>founder approval first</b> (Ghost Mode). This is a real composer, not a demo form.</div>' +
       '</div></div>' +
 
@@ -94,13 +94,16 @@
         stat("Ad spend to date", S.money(st.spend), "◇", "media buys · Stripe not wired in the showroom") +
       '</div>' +
 
-      /* ---- campaign ledger ---- */
-      '<div class="card pad-lg mt" style="margin-top:16px"><div class="card-head"><h3>All campaigns</h3>' +
-        '<span class="pill">rates computed live</span></div>' +
-        '<table class="tbl"><thead><tr><th>Campaign</th><th>Channel</th><th>Status</th>' +
-        '<th class="num">Audience</th><th class="num">Open rate</th><th class="num">CTR</th>' +
-        '<th class="num">Conv.</th><th class="num">Spend</th></tr></thead>' +
-        '<tbody id="crows"></tbody></table></div>' +
+      /* ---- campaign board ---- */
+      '<div class="card pad-lg mt cb" style="margin-top:16px"><div class="card-head"><h3>Every campaign</h3>' +
+        '<span class="pill">tap a card to open it</span></div>' +
+        '<div class="cb-rail" id="cbRail"></div>' +
+        '<div class="cb-tools"><div class="cb-chips" id="cbChips"></div>' +
+          '<input class="input cb-q" id="cbQ" placeholder="Search campaigns">' +
+          '<select class="input cb-sort" id="cbSort"><option value="new">Newest</option><option value="name">Name</option>' +
+          '<option value="conv">Conversions</option><option value="spend">Spend</option></select></div>' +
+        '<div class="cb-deptkey" id="cbKey"></div>' +
+        '<div class="cb-grid" id="crows"></div></div>' +
 
       /* ---- composer + org ---- */
       '<div class="grid g-2 mt" style="margin-top:16px;grid-template-columns:1.15fr .85fr">' +
@@ -117,6 +120,9 @@
               seg.list.map(function (s) { return "<option value=\""+s+"\">"+s+"</option>"; }).join("") +
             '</select></div>' +
           '</div>' +
+          '<div class="field"><label>Departments on it</label><div class="dpick" id="cDepts">' +
+            DEPTS.map(function (d) { return '<button type="button" class="dp" data-d="'+d[0]+'"><img src="'+d[2]+'" alt="">'+d[1]+'</button>'; }).join("") +
+          '</div></div>' +
           '<div class="est-audience mb" id="estBox">' +
             '<div><div class="ea-lab">Estimated audience</div>' +
             '<div class="ea-note" id="eaNote">Contacts in this segment</div></div>' +
@@ -150,22 +156,117 @@
     wire();
   }
 
+  /* ------------------------------------------------------- departments */
+  /* The agency's own departments. Each campaign carries the marks of every
+     department working on it, so a card says at a glance who is on the job. */
+  var DEPTS = [
+    ["newbiz",   "New Business",    "icons/pipeline.svg"],
+    ["research", "Market Research", "icons/research.svg"],
+    ["creative", "Creative Studio", "icons/studio.svg"],
+    ["social",   "Social Media",    "icons/social.svg"],
+    ["web",      "Website Builder", "icons/webbuilder.svg"]
+  ];
+  var SEED_DEPTS = { m1: ["research","creative","social"], m2: ["creative","social"], m3: ["research","web"], m4: ["newbiz","creative"] };
+  function dept(k) { return DEPTS.filter(function (d) { return d[0] === k; })[0]; }
+  function deptsOf(m) {
+    if (Array.isArray(m.depts)) return m.depts.filter(dept);
+    if (SEED_DEPTS[m.id]) return SEED_DEPTS[m.id];
+    return m.channel === "Email" ? ["creative"] : m.channel === "Search" ? ["web"] : ["social"];
+  }
+  function marks(list, size) {
+    if (!list.length) return '<span class="small muted">No department yet</span>';
+    return list.map(function (k) { var d = dept(k);
+      return '<img src="'+d[2]+'" alt="'+d[1]+'" title="'+d[1]+'" style="width:'+size+'px;height:'+size+'px">'; }).join("");
+  }
+
+  /* --------------------------------------------- board state (this viewer) */
+  var F = { st: "all", ch: "all", q: "", sort: "new" };
+  try { var saved = JSON.parse(localStorage.getItem("tos-cb-filter")); if (saved) F = Object.assign(F, saved, { q: "" }); } catch (e) {}
+  function keepF() { try { localStorage.setItem("tos-cb-filter", JSON.stringify({ st: F.st, ch: F.ch, sort: F.sort })); } catch (e) {} }
+
   /* ---------------------------------------------------------------- rows */
   function renderRows() {
-    var d = S.db();
-    document.getElementById("crows").innerHTML = d.campaigns.map(function (m) {
-      var openR = m.channel === "Email" ? fmtPct(pct(m.opens, m.sent)) : "—";
-      var ctr = fmtPct(pct(m.clicks, m.sent));
-      var staged = m._staged ? ' <span class="pill warn" style="margin-left:6px">staged</span>' : "";
-      return '<tr><td><b>'+m.name+'</b>'+staged+'</td>' +
-        '<td>'+channelPill(m.channel)+'</td>' +
-        '<td>'+statusPill(m.status)+'</td>' +
-        '<td class="num">'+((m.audience||0).toLocaleString())+'</td>' +
-        '<td class="num">'+openR+'</td>' +
-        '<td class="num">'+ctr+'</td>' +
-        '<td class="num">'+(m.conv||0)+'</td>' +
-        '<td class="num">'+(m.spend?S.money(m.spend):"—")+'</td></tr>';
+    var all = S.db().campaigns;
+    var STS = [["all","Every"],["Live","Live"],["Scheduled","Scheduled"],["Draft","Draft"]];
+    document.getElementById("cbRail").innerHTML = STS.map(function (x) {
+      var n = x[0] === "all" ? all.length : all.filter(function (m) { return m.status === x[0]; }).length;
+      return '<button class="rs'+(F.st===x[0]?" on":"")+'" data-st="'+x[0]+'"><b>'+n+'</b><span>'+x[1]+'</span></button>';
     }).join("");
+    var CHS = ["all","Email","Paid Social","Search"];
+    document.getElementById("cbChips").innerHTML = CHS.map(function (c) {
+      return '<button class="chip'+(F.ch===c?" on":"")+'" data-ch="'+c+'">'+(c==="all"?"All channels":c)+'</button>';
+    }).join("");
+    document.getElementById("cbKey").innerHTML = DEPTS.map(function (d) {
+      var n = all.filter(function (m) { return deptsOf(m).indexOf(d[0]) > -1; }).length;
+      return '<span><img src="'+d[2]+'" alt="">'+d[1]+' <b>'+n+'</b></span>';
+    }).join("");
+    var q = F.q.toLowerCase();
+    var list = all.map(function (m, i) { return { m: m, i: i }; }).filter(function (x) {
+      var m = x.m;
+      if (F.st !== "all" && m.status !== F.st) return false;
+      if (F.ch !== "all" && m.channel !== F.ch) return false;
+      if (q) { var t = (m.name+" "+m.channel+" "+deptsOf(m).map(function (k) { return dept(k)[1]; }).join(" ")).toLowerCase(); if (t.indexOf(q) < 0) return false; }
+      return true;
+    });
+    list.sort(function (a, b) {
+      if (F.sort === "name") return a.m.name.localeCompare(b.m.name);
+      if (F.sort === "conv") return (b.m.conv||0) - (a.m.conv||0);
+      if (F.sort === "spend") return (b.m.spend||0) - (a.m.spend||0);
+      return b.i - a.i;
+    });
+    document.getElementById("crows").innerHTML = list.length ? list.map(function (x) {
+      var m = x.m;
+      var openR = m.channel === "Email" ? fmtPct(pct(m.opens, m.sent)) : "—";
+      var staged = m._staged ? ' <span class="pill warn">staged</span>' : "";
+      return '<button class="cb-card" data-id="'+m.id+'">' +
+        '<div class="cb-marks">'+marks(deptsOf(m), 44)+'</div>' +
+        '<div class="cb-name">'+m.name+'</div>' +
+        '<div class="cb-pills">'+statusPill(m.status)+channelPill(m.channel)+staged+'</div>' +
+        '<div class="cb-nums"><span><b>'+((m.audience||0).toLocaleString())+'</b>audience</span>' +
+          '<span><b>'+openR+'</b>open</span><span><b>'+fmtPct(pct(m.clicks, m.sent))+'</b>CTR</span>' +
+          '<span><b>'+(m.conv||0)+'</b>conv.</span><span><b>'+(m.spend?S.money(m.spend):"—")+'</b>spend</span></div>' +
+      '</button>';
+    }).join("") : '<div class="muted small" style="padding:18px 4px">No campaigns match. Clear the filters or start one below.</div>';
+  }
+
+  /* --------------------------------------------------------------- sheet */
+  function openSheet(id) {
+    var m = S.db().campaigns.filter(function (x) { return x.id === id; })[0]; if (!m) return;
+    var on = deptsOf(m);
+    var back = document.getElementById("cbSheet");
+    if (!back) { back = S.el('<div class="modal-back" id="cbSheet"></div>'); document.body.appendChild(back);
+      back.addEventListener("click", function (e) { if (e.target === back) back.classList.remove("open"); }); }
+    back.innerHTML = '<div class="modal cb-sheet">' +
+      '<div class="cb-marks">'+marks(on, 52)+'</div>' +
+      '<h3>'+m.name+'</h3>' +
+      '<div class="cb-pills">'+statusPill(m.status)+channelPill(m.channel)+'</div>' +
+      '<div class="cb-nums mt"><span><b>'+((m.audience||0).toLocaleString())+'</b>audience</span>' +
+        '<span><b>'+((m.sent||0).toLocaleString())+'</b>sent</span><span><b>'+(m.clicks||0).toLocaleString()+'</b>clicks</span>' +
+        '<span><b>'+(m.conv||0)+'</b>conv.</span></div>' +
+      '<div class="field mt"><label>Departments on it</label><div class="dpick" id="sDepts">' +
+        DEPTS.map(function (d) { return '<button type="button" class="dp'+(on.indexOf(d[0])>-1?" on":"")+'" data-d="'+d[0]+'"><img src="'+d[2]+'" alt="">'+d[1]+'</button>'; }).join("") +
+      '</div></div>' +
+      '<div class="field"><label>Where it stands</label><div class="dpick" id="sSteps">' +
+        ["Draft","Scheduled","Live"].map(function (t) { return '<button type="button" class="dp'+(m.status===t?" on":"")+'" data-s="'+t+'">'+t+'</button>'; }).join("") +
+      '</div><div class="small muted" style="margin-top:6px">Going Live still routes to founder approval first. Nothing leaves the OS.</div></div>' +
+      '<button class="btn wide mt" id="sClose">Close</button></div>';
+    back.classList.add("open");
+    document.getElementById("sClose").onclick = function () { back.classList.remove("open"); };
+    document.getElementById("sDepts").onclick = function (e) {
+      var b = e.target.closest(".dp"); if (!b) return;
+      b.classList.toggle("on");
+      var pick = [].slice.call(this.querySelectorAll(".dp.on")).map(function (x) { return x.getAttribute("data-d"); });
+      S.save(function (d) { d.campaigns.forEach(function (x) { if (x.id === id) x.depts = pick; }); });
+      back.querySelector(".cb-marks").innerHTML = marks(pick, 52);
+      renderRows();
+    };
+    document.getElementById("sSteps").onclick = function (e) {
+      var b = e.target.closest(".dp"); if (!b) return;
+      var t = b.getAttribute("data-s");
+      S.save(function (d) { d.campaigns.forEach(function (x) { if (x.id === id) { x.status = t === "Live" ? "Scheduled" : t; if (t === "Live") x._staged = true; } }); });
+      if (t === "Live") S.toast("Staged for founder approval — Ghost Mode. Nothing leaves the OS.", "warn");
+      renderRows(); openSheet(id);
+    };
   }
 
   /* -------------------------------------------------------- estimated audience */
@@ -180,6 +281,12 @@
   /* ---------------------------------------------------------------- wiring */
   function wire() {
     document.getElementById("cSeg").addEventListener("change", renderEst);
+    document.getElementById("cbRail").onclick = function (e) { var b = e.target.closest(".rs"); if (!b) return; F.st = b.getAttribute("data-st"); keepF(); renderRows(); };
+    document.getElementById("cbChips").onclick = function (e) { var b = e.target.closest(".chip"); if (!b) return; F.ch = b.getAttribute("data-ch"); keepF(); renderRows(); };
+    document.getElementById("cbQ").oninput = function () { F.q = this.value; renderRows(); };
+    var so = document.getElementById("cbSort"); so.value = F.sort; so.onchange = function () { F.sort = this.value; keepF(); renderRows(); };
+    document.getElementById("crows").onclick = function (e) { var b = e.target.closest(".cb-card"); if (b) openSheet(b.getAttribute("data-id")); };
+    document.getElementById("cDepts").onclick = function (e) { var b = e.target.closest(".dp"); if (b) b.classList.toggle("on"); };
 
     // Save as draft
     document.getElementById("cDraft").addEventListener("click", function () {
@@ -192,6 +299,7 @@
         d.campaigns.push({
           id: "m" + Date.now(), name: name, channel: chan, status: "Draft",
           audience: aud, sent: 0, opens: 0, clicks: 0, spend: 0, conv: 0,
+          depts: [].slice.call(document.querySelectorAll("#cDepts .dp.on")).map(function (x) { return x.getAttribute("data-d"); }),
           subject: document.getElementById("cSubj").value.trim(),
           body: document.getElementById("cBody").value.trim()
         });
@@ -248,6 +356,33 @@
     ".est-audience .ea-lab{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}" +
     ".est-audience .ea-note{font-size:11.5px;color:var(--text-2);margin-top:3px}" +
     ".est-audience .ea-big{font-size:30px;font-weight:800;font-family:var(--mono);color:var(--brand-ink);letter-spacing:-1px}" +
+    ".cb-rail{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:4px 0 12px}" +
+    ".cb-rail .rs{background:var(--ink-2);border:1px solid var(--line-soft);border-radius:12px;padding:10px 8px;color:var(--text-2);cursor:pointer;text-align:center;font:inherit}" +
+    ".cb-rail .rs b{display:block;font-size:22px;font-family:var(--mono);color:var(--text)}" +
+    ".cb-rail .rs span{font-size:11px;text-transform:uppercase;letter-spacing:.6px}" +
+    ".cb-rail .rs.on{border-color:var(--brand);background:var(--brand-glow)}" +
+    ".cb-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}" +
+    ".cb-chips{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%}" +
+    ".chip{background:var(--panel-3);border:1px solid transparent;color:var(--text-2);border-radius:20px;padding:6px 12px;font:600 12px Inter,sans-serif;cursor:pointer}" +
+    ".chip.on{border-color:var(--brand);color:var(--brand-ink);background:var(--brand-glow)}" +
+    ".cb-q{flex:1 1 180px;min-width:0}.cb-sort{flex:0 0 140px}" +
+    ".cb-deptkey{display:flex;flex-wrap:wrap;gap:6px 14px;margin:2px 0 12px;font-size:11.5px;color:var(--muted)}" +
+    ".cb-deptkey span{display:inline-flex;align-items:center;gap:6px}.cb-deptkey img{width:18px;height:18px;border-radius:5px}.cb-deptkey b{color:var(--text-2)}" +
+    ".cb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}" +
+    ".cb-card{display:block;text-align:left;font:inherit;color:inherit;background:var(--ink-2);border:1px solid var(--line-soft);border-radius:14px;padding:14px;cursor:pointer;min-width:0}" +
+    ".cb-card:hover{border-color:var(--brand)}" +
+    ".cb-marks{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}.cb-marks img{border-radius:11px;display:block}" +
+    ".cb-name{font-weight:700;font-size:15px;margin-bottom:8px;overflow-wrap:anywhere}" +
+    ".cb-pills{display:flex;flex-wrap:wrap;gap:6px}" +
+    ".cb-nums{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:11px;color:var(--muted)}" +
+    ".cb-nums b{display:block;font-family:var(--mono);font-size:13px;color:var(--text)}" +
+    ".dpick{display:flex;flex-wrap:wrap;gap:6px}" +
+    ".dp{display:inline-flex;align-items:center;gap:6px;background:var(--panel-3);border:1px solid transparent;color:var(--text-2);border-radius:10px;padding:5px 10px 5px 5px;font:600 12px Inter,sans-serif;cursor:pointer}" +
+    ".dp img{width:22px;height:22px;border-radius:6px}.dp:not(:has(img)){padding-left:10px}" +
+    ".dp.on{border-color:var(--brand);background:var(--brand-glow);color:var(--text)}" +
+    ".cb-sheet{max-height:88vh;overflow:auto}" +
+    ".cb .card-head h3,.cb-name,.cb-sheet h3{color:var(--text,#EAEDF4)!important}" +
+    "@media(max-width:720px){.cb-rail .rs b{font-size:18px}.cb-sort{flex:1 1 100%}.cb-grid{grid-template-columns:1fr}}" +
     ".gate-note{display:flex;align-items:center;background:var(--ink-2);border:1px solid var(--line-soft);border-left:3px solid var(--warn);border-radius:10px;padding:10px 13px}";
   document.head.appendChild(s);
 
