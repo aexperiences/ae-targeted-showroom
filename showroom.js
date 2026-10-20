@@ -2,7 +2,7 @@
 (function(){try{if(window.self!==window.top){var s=document.createElement("style");s.textContent=".ribbon{display:none!important}";(document.head||document.documentElement).appendChild(s);}}catch(e){}})();
 /* ============================================================================
    TARGETED HUB — SHOWROOM ENGINE
-   Marketing Agency OS · AETRIAD Powered · Accelerated Experiences LLC
+   Marketing Agency OS · Accelerated Operating Systems · Accelerated Experiences LLC
 
    BROWSER-ONLY SHOWROOM. No backend, no network. Everything lives in this
    browser tab's sessionStorage and resets when the visitor leaves or idles.
@@ -626,7 +626,7 @@
       '<a href="javascript:void(0)" id="resetFloor">Reset the floor</a></div>');
   }
   function footer() {
-    return el('<div class="ae-credit"><a href="https://www.aexperiences.com/" class="ae-triad" aria-label="AETRIAD Powered - Accelerated Experiences LLC"><img src="marks/aos-aetriad-powered.png" alt="AOS - AETRIAD Powered" style="height:64px;width:auto;vertical-align:middle"></a><br>Targeted OS is a white-label build.</div>');
+    return el('<div class="ae-credit"><a href="https://www.aexperiences.com/" class="ae-triad" aria-label="AOS — Accelerated Experiences LLC"><img src="marks/aos-badge.png" alt="AOS — Accelerated Operating Systems" style="height:64px;width:auto;vertical-align:middle"></a><br>Targeted OS is a white-label build.</div>');
   }
 
   /* mount: called by every page */
