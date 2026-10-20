@@ -135,7 +135,7 @@
   var DEPTS = [
     { group: "Command",     items: [
       { href: "dashboard.html", label: "Command Center", ic: "icons/command-center.svg", minRank: 1 }, { href: "calendar.html", label: "Calendar", ic: "icons/calendar.svg", minRank: 1 }, { href:"contacts.html", label:"Contacts", ic:"icons/contacts.svg" }, { href:"connect.html", label:"Connect · Video", ic:"icons/connect.svg" }, { href:"records.html", label:"Records · Filing", ic:"icons/records.svg" },
-      { href: "approvals.html", label: "Approval Desk", ic: "icons/approvals.svg", minRank: 1, accent: "ops" }, { href:"masterlist.html", label:"Master List", ic:"✎" }, { href:"mail.html", label:"Mail", ic:"✉" } ]},
+      { href: "approvals.html", label: "Approval Desk", ic: "icons/approvals.svg", minRank: 1, accent: "ops" }, { href:"masterlist.html", label:"Master List", ic:"birdseye/icons/master-list.svg" }, { href:"mail.html", label:"Mail", ic:"birdseye/icons/mail.svg" } ]},
     { group: "New Business", items: [
       { href: "pipeline.html",  label: "CRM · Pipeline",  ic: "icons/pipeline.svg", minRank: 1, accent: "sales" },
       { href: "estimator.html", label: "Estimating Machine", ic: "icons/estimator.svg", minRank: 1, accent: "money" }
@@ -147,7 +147,7 @@
     ]},
     { group: "Craft", items: [
       { href: "studio.html",    label: "Creative Studio", ic: "icons/studio.svg", minRank: 1, accent: "creative" },
-      { href: "webbuilder.html",label: "Website Builder", ic: "icons/webbuilder.svg", minRank: 1, accent: "creative" }, { href:"aimos.html", label:"Swag Room", ic:"▦" } ]},
+      { href: "webbuilder.html",label: "Website Builder", ic: "icons/webbuilder.svg", minRank: 1, accent: "creative" }, { href:"aimos.html", label:"Swag Room", ic:"birdseye/icons/aimos-supplies.svg" } ]},
     { group: "Money", items: [
       { href: "books.html",     label: "Books & Margins", ic: "icons/books.svg", minRank: 2, accent: "money" }
     ]},
@@ -157,8 +157,8 @@
     ]},
     { group: "Governance", items: [
       { href: "law.html",       label: "Law · Business",  ic: "icons/law.svg", minRank: 3, accent: "research" },
-      { href: "it.html",        label: "IT · Health",     ic: "icons/it.svg", minRank: 2, accent: "prod" }, { href:"documents.html", label:"Documents", ic:"▤" }, { href:"sign.html", label:"e-Sign", ic:"✍" } ]},
-    { group:"The House", items:[ { href:"manual.html", label:"Owner's Manual", ic:"?" }, { href:"skins.html", label:"Skins", ic:"◐" } ] },
+      { href: "it.html",        label: "IT · Health",     ic: "icons/it.svg", minRank: 2, accent: "prod" }, { href:"documents.html", label:"Documents", ic:"birdseye/icons/documents.svg" }, { href:"sign.html", label:"e-Sign", ic:"birdseye/icons/sign.svg" } ]},
+    { group:"The House", items:[ { href:"manual.html", label:"Owner's Manual", ic:"birdseye/icons/manual.svg" }, { href:"skins.html", label:"Skins", ic:"birdseye/icons/skins.svg" } ] },
     { group: "The Org", items: [
       { href: "org.html",       label: "Agent Org · Bus", ic: "icons/org.svg", minRank: 2, accent: "ops" }
     ]}
