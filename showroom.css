@@ -136,6 +136,8 @@ button{font-family:var(--font);cursor:pointer}
 .ribbon .live::before{content:"";width:7px;height:7px;border-radius:50%;background:#1a0f08;animation:pulse 1.6s infinite}
 .ribbon a{text-decoration:underline;font-weight:700}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+/* phones (Oct 24 2026): one flowing line with the dark LIVE SHOWROOM pill, like the other systems; the flex row was cramming it into three columns */
+@media (max-width:640px){.ribbon{display:block;text-align:left;padding:8px 16px;font-size:13px;line-height:1.5}.ribbon .live{display:inline-block;background:#1a0f08;color:#f3e3c4;font-size:10px;letter-spacing:.1em;padding:2px 7px;border-radius:6px;margin-right:6px}.ribbon .live::before{display:none}}
 
 /* ---------- Cards & layout ---------- */
 .page-h{display:flex;align-items:flex-end;gap:16px;margin-bottom:22px}
