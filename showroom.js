@@ -125,9 +125,9 @@
 
   /* ---------------------------------------------------- tiers (subtract-down) */
   var TIERS = {
-    multi:     { key: "multi",     name: "Mothership",        price: "$2,200/mo · no build fee", rank: 3 },
-    agency:    { key: "agency",    name: "Elite",            price: "$950/mo · no build fee",  rank: 2 },
-    freelance: { key: "freelance", name: "Core", price: "$450/mo · no build fee", rank: 1 }
+    multi:     { key: "multi",     name: "Mothership",        price: "$3,400/mo · no build fee", rank: 3 },
+    agency:    { key: "agency",    name: "Elite",            price: "$2,000/mo · no build fee",  rank: 2 },
+    freelance: { key: "freelance", name: "Core", price: "$549/mo · no build fee", rank: 1 }
   };
 
   /* Departments (nav). minRank = lowest tier that still includes this department.
